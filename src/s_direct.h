@@ -52,15 +52,15 @@ class FileFind {
 #elif defined(OS2) && !defined(USE_DIRENT)
     unsigned long dir; // should be HDIR, but we don't #include huge os2.h globally
 #elif defined(NT) && !defined(USE_DIRENT)
-    unsigned long dir; // should be HANDLE
+	HANDLE dir; // should be HANDLE
 #endif
 
 public:
     FileFind(const char *aDirectory, const char *aPattern, int aFlags);
     ~FileFind();
 
-    int FindFirst(FileInfo **fi);
-    int FindNext(FileInfo **fi);
+    HANDLE FindFirst(FileInfo **fi);
+	HANDLE FindNext(FileInfo **fi);
 };
 
 #endif

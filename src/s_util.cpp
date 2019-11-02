@@ -146,7 +146,7 @@ int CompletePath(const char *Base, char *Match, int Count) {
     RxMatchRes RM;
     FileFind *ff;
     FileInfo *fi;
-    int rc;
+	HANDLE rc;
 
     if (strcmp(Base, "") == 0) {
         if (ExpandPath(".", Name, sizeof(Name)) != 0) return -1;

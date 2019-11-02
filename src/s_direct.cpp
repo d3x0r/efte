@@ -10,6 +10,7 @@
 
 // TODO: on OS/2 choose between UNIX and OS/2 style patterns (now OS/2 only)
 // TODO: on OS/2 fetch multiple entries at once and cache them for speed
+
 #include "fte.h"
 
 #ifdef OS2
@@ -17,10 +18,6 @@
 #include <os2.h>
 #endif
 
-#ifdef NT
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
-#endif
 
 FileInfo::FileInfo(const char *Name, int Type, off_t Size, time_t MTime,
                   const char *SymlinkTargetName) {
@@ -102,7 +99,7 @@ FileFind::~FileFind() {
 #endif
 }
 
-int FileFind::FindFirst(FileInfo **fi) {
+HANDLE FileFind::FindFirst(FileInfo **fi) {
 #if defined(USE_DIRENT)
     if (dir)
         closedir(dir);
@@ -214,10 +211,10 @@ int FileFind::FindFirst(FileInfo **fi) {
     struct tm t;
     SYSTEMTIME st;
     FILETIME localft;                   // needed for time conversion
-    int rc;
+    HANDLE rc;
 
     if (dir)
-        _findclose(dir);
+        FindClose(dir);
 
     /*if (Flags & ffDIRECTORY)
     attr |= FILE_DIRECTORY;
@@ -230,9 +227,9 @@ int FileFind::FindFirst(FileInfo **fi) {
     else
         JoinDirFile(fullpattern, Directory, "*");
 
-    if ((rc = (int) FindFirstFile(fullpattern, &find)) < 0) {
+    if ((rc = FindFirstFile(fullpattern, &find)) < 0) {
         //fprintf(stderr, "%s: %d\n\n", fullpattern, rc);
-        return -1;
+        return (HANDLE)-1;
     }
     dir = rc;
 
@@ -268,7 +265,7 @@ int FileFind::FindFirst(FileInfo **fi) {
 #endif
 }
 
-int FileFind::FindNext(FileInfo **fi) {
+HANDLE FileFind::FindNext(FileInfo **fi) {
 #if defined(USE_DIRENT)
     struct dirent *dent;
     char fullpath[MAXPATH];
@@ -411,7 +408,7 @@ again:
     if ((rc = FindNextFile((HANDLE)dir,
                            &find)) != TRUE) {
         //fprintf(stderr, "%d\n\n", rc);
-        return -1;
+        return (HANDLE)-1;
     }
 
     name = find.cFileName;

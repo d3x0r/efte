@@ -74,7 +74,7 @@ int MultiFileLoad(int createFlags, const char *FileName, const char *Mode, EView
     char FName[MAXPATH];
     FileFind *ff;
     FileInfo *fi;
-    int rc;
+    HANDLE rc;
 
     assert(View != 0);
 

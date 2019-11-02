@@ -118,7 +118,7 @@ void EDirectory::RescanList() {
     unsigned long SizeCount = 0;
     FileFind *ff;
     FileInfo *fi;
-    int rc;
+	HANDLE rc;
 
     if (Files)
         FreeList();

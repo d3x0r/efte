@@ -33,6 +33,11 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#ifdef NT
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
+#endif
+
 #ifdef DBMALLOC
 #include <malloc.h>
 #endif
