@@ -235,6 +235,7 @@ ELSEIF( WIN32 )
   ADD_DEFINITIONS( -DNT -DNTCONSOLE -DWIN32 -D_CONSOLE )
   ADD_EXECUTABLE( efte ${CMAKE_CURRENT_BINARY_DIR}/defcfg.h ${WFTE_SOURCES} )
   TARGET_LINK_LIBRARIES( efte eftebase ${SYSTEM_LIBS} )
+  INSTALL( TARGETS efte RUNTIME DESTINATION . )
 ENDIF( UNIX )
 
 # =============================================================================

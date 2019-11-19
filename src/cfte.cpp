@@ -1819,7 +1819,15 @@ static int LoadFile(const char *WhereName, const char *CfgName, int Level, int o
 #else // if PT_UNIXISH
 #       define SEARCH_PATH_LEN 11
         char dirs[SEARCH_PATH_LEN][MAXPATH];
-        snprintf(dirs[0], MAXPATH, "%s/%s", ConfigDir, CfgName);
+#ifdef WIN32
+		{
+			char* tmp;
+			GetModuleFileName( NULL, ConfigDir, MAXPATH );
+			tmp = strrchr( ConfigDir, '\\' );
+			tmp[0] = 0;
+		}
+#endif
+        snprintf(dirs[0], MAXPATH, "%s/mymain.fte/%s", ConfigDir, CfgName);
         snprintf(dirs[1], MAXPATH, "~/.efte/%s", CfgName);
         snprintf(dirs[2], MAXPATH, "~/efte/%s", CfgName);
         snprintf(dirs[3], MAXPATH, "/efte/local/%s", CfgName);
