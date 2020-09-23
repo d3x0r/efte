@@ -65,14 +65,14 @@ eventmap MLIST: MODEL {
     key   [C+Left]      { ScrollRight }
     key   [C+Right]     { ScrollLeft }
 
-    key     [C+S]       { MoveLeft }
-    key     [C+D]       { MoveRight }
-    key     [C+E]       { MoveUp }
-    key     [C+X]       { MoveDown }
-    key     [C+R]       { MovePageUp }
-    key     [C+C]       { MovePageDown }
-    key     [C+Q_C-S-R] { MoveFileStart }
-    key     [C+Q_C-S-C] { MoveFileEnd }
+#    key     [C+S]       { MoveLeft }
+#    key     [C+D]       { MoveRight }
+#    key     [C+E]       { MoveUp }
+#    key     [C+X]       { MoveDown }
+#    key     [C+R]       { MovePageUp }
+#    key     [C+C]       { MovePageDown }
+#    key     [C+Q_C-S-R] { MoveFileStart }
+#    key     [C+Q_C-S-C] { MoveFileEnd }
 
     key     [G-Enter]   { Activate }
     key     [Space]     { ActivateInOtherWindow }
@@ -302,7 +302,7 @@ eventmap PLAIN: MODEL {
     key     [C+S]       { MoveLeft }
     key     [C+T]       { KillWord }
     key     [C+U]       { Undo }
-    key     [C+V]       { ToggleInsert }
+#    key     [C+V]       { ToggleInsert }
     key     [C+W]       { ScrollDown }
     key     [C+X]       { MoveDown }
     key     [C+Y]       { KillLine }
