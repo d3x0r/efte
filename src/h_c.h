@@ -13,5 +13,5 @@ enum highlightSyntaxModes {
     hsC_CPP_Comm    ,
     hsC_CPP_String1 ,
     hsC_CPP_String2 ,
-    hsC_CPP_ABrace  ,
+    hsC_CPP_ABrace
 };
