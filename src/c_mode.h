@@ -35,23 +35,27 @@
 //typedef unsigned char ChColor;
 typedef int ChColor;
 
-#define HILIT_PLAIN   0
-#define HILIT_C       1
-#define HILIT_HTML    2
-#define HILIT_MAKE    3
-#define HILIT_REXX    4
-#define HILIT_DIFF    5
-#define HILIT_IPF     6
-#define HILIT_PERL    7
-#define HILIT_MERGE   8
-#define HILIT_ADA     9
-#define HILIT_MSG    10
-#define HILIT_SH     11
-#define HILIT_PASCAL 12
-#define HILIT_TEX    13
-#define HILIT_FTE    14
-#define HILIT_CATBS  15
-#define HILIT_SIMPLE 16
+enum HILIT_MODES {
+    HILIT_PLAIN,
+    HILIT_C,
+    HILIT_HTML,
+    HILIT_MAKE,
+    HILIT_REXX,
+    HILIT_DIFF,
+    HILIT_IPF,
+    HILIT_PERL,
+    HILIT_MERGE,
+    HILIT_ADA,
+    HILIT_MSG,
+    HILIT_SH,
+    HILIT_PASCAL,
+    HILIT_TEX,
+    HILIT_FTE,
+    HILIT_CATBS,
+    HILIT_SIMPLE,
+    HILIT_JS
+
+};
 
 #define INDENT_PLAIN    0
 #define INDENT_C        1

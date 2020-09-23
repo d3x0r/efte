@@ -17,6 +17,7 @@ static const struct {
 } HilitModes[] = {
     { "PLAIN", HILIT_PLAIN, Hilit_Plain },
     { "C", HILIT_C, Hilit_C },
+    { "JS", HILIT_JS, Hilit_JS },
     { "REXX", HILIT_REXX, Hilit_REXX },
     { "PERL", HILIT_PERL, Hilit_PERL },
     { "MAKE", HILIT_MAKE, Hilit_MAKE },

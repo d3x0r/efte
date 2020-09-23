@@ -683,6 +683,7 @@ public:
     int FindTagWord(ExState &State);
 
     int SetCIndentStyle(ExState &State);
+    int SetJSIndentStyle(ExState &State);
 
     int FindFunction(int delta, int way);
     int BlockMarkFunction();

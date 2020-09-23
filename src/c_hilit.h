@@ -38,6 +38,7 @@ HILIT_P(Hilit_Plain);
 /* highlighting state */
 
 HILIT_P(Hilit_C);
+HILIT_P(Hilit_JS);
 HILIT_P(Hilit_PERL);
 HILIT_P(Hilit_MAKE);
 HILIT_P(Hilit_REXX);

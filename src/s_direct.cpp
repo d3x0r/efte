@@ -18,7 +18,6 @@
 #include <os2.h>
 #endif
 
-
 FileInfo::FileInfo(const char *Name, int Type, off_t Size, time_t MTime,
                   const char *SymlinkTargetName) {
     name = new char[strlen(Name) + 1];

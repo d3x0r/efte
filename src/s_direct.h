@@ -12,6 +12,9 @@
 #define SDIRECT_H_
 
 // error handling needs some work
+#ifndef NT
+	typedef int HANDLE;
+#endif
 
 #define fiUNKNOWN   0
 #define fiFILE      1
