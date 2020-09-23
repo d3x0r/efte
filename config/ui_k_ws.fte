@@ -252,16 +252,16 @@ eventmap PLAIN: MODEL {
     key     [C+Q_9]     { GotoBookmark "9" }
     key     [C+Q_0]     { GotoBookmark "0" }
 
-    key     [C+A]       { MoveWordPrev }
+  #  key     [C+A]       { MoveWordPrev }
     key     [C+B]       { ViewBuffers }
-    key     [C+C]       { MovePageDown }
-    key     [C+D]       { MoveRight }
-    key     [C+E]       { MoveUp }
-    key     [C+F]       { MoveWordNext }
-    key     [C+G]       { KillChar }
-    key     [C+H]       { KillCharPrev }
-    key     [C+I]       { InsertTab }
-    key     [C+J]       { LineJoin }
+  #  key     [C+C]       { MovePageDown }
+  #  key     [C+D]       { MoveRight }
+  #  key     [C+E]       { MoveUp }
+  #  key     [C+F]       { MoveWordNext }
+  #  key     [C+G]       { KillChar }
+  #  key     [C+H]       { KillCharPrev }
+  #  key     [C+I]       { InsertTab }
+  #  key     [C+J]       { LineJoin }
     key     [C+K_C-S-A]   { BlockMarkStream }
     key     [C+K_C-S-B]   { BlockBegin }
     key     [C+K_C-S-C]   { BlockCopy; BlockPaste }
@@ -298,15 +298,15 @@ eventmap PLAIN: MODEL {
     key     [C+Q_C-S-Y]   { KillToLineEnd }
     key     [C+Q_C-\[]  { MatchBracket }
     key     [C+Q_C-\]]  { MatchBracket }
-    key     [C+R]       { MovePageUp }
-    key     [C+S]       { MoveLeft }
-    key     [C+T]       { KillWord }
+  #  key     [C+R]       { MovePageUp }
+  #  key     [C+S]       { MoveLeft }
+  #  key     [C+T]       { KillWord }
     key     [C+U]       { Undo }
 #    key     [C+V]       { ToggleInsert }
-    key     [C+W]       { ScrollDown }
-    key     [C+X]       { MoveDown }
+  #  key     [C+W]       { ScrollDown }
+  #  key     [C+X]       { MoveDown }
     key     [C+Y]       { KillLine }
-    key     [C+Z]       { ScrollUp }
+  #  key     [C+Z]       { ScrollUp }
     
     key     [A+A]       { BlockMarkStream }
     key     [A+B]       { MainMenu 'B' }
