@@ -45,6 +45,10 @@ public:
 #define ffHIDDEN     8  // return hidden files (dot-files for UNIX)
 #define ffLINK      16  // diagnose location of symbolic link, not link itself
 
+#if defined( USE_DIRENT )
+typedef DIR* HANDLE;
+#endif
+
 class FileFind {
     char *Directory;
     char *Pattern;
