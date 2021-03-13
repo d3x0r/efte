@@ -104,7 +104,7 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
     if (dir)
         closedir(dir);
     if ((dir = opendir(Directory)) == 0)
-        return -1;
+        return (HANDLE)-1;
     return FindNext(fi);
 #elif defined(OS2) && !defined(USE_DIRENT)
     char fullpattern[MAXPATH];
@@ -138,11 +138,11 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
                            &count,
                            FIL_STANDARD)) != 0) {
         //fprintf(stderr, "%s: %d\n\n", fullpattern, rc);
-        return -1;
+        return (HANDLE)-1;
     }
     dir = hdir;
     if (count != 1)
-        return -1;
+        return (HANDLE)-1;
     name = find.achName;
     if (Flags & ffFULLPATH) {
         JoinDirFile(fullpath, Directory, name);
@@ -187,7 +187,7 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
 
     if ((rc = _findfirst(fullpattern, &find)) == -1) {
         //        fprintf(stderr, "%s: %d\n\n", fullpattern, rc);
-        return -1;
+        return (HANDLE)-1;
     }
     dir = rc;
 
@@ -274,7 +274,7 @@ HANDLE FileFind::FindNext(FileInfo **fi) {
     *fi = 0;
 again:
     if ((dent = readdir(dir)) == NULL)
-        return -1;
+        return (HANDLE)-1;
     name = dent->d_name;
 
     if (name[0] == '.')
