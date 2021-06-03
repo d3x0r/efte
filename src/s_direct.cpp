@@ -226,7 +226,7 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
     else
         JoinDirFile(fullpattern, Directory, "*");
 
-    if ((rc = FindFirstFile(fullpattern, &find)) < 0) {
+    if ((rc = FindFirstFile(fullpattern, &find)) == INVALID_HANDLE_VALUE ) {
         //fprintf(stderr, "%s: %d\n\n", fullpattern, rc);
         return (HANDLE)-1;
     }
