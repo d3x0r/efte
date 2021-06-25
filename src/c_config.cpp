@@ -90,10 +90,10 @@ char BackupDirectory[MAXPATH] = "";
 // Which characters to get. defaultCharacters if not set, rest filled
 // with defaultCharacters if too short
 // List of GUICharacters is freed, only one item remains
-const char *GetGUICharacters(const char *which, const char *defChars) {
+const char *GetGUICharacters(const char *which, const char*defChars) {
     GUICharactersEntry *g, *gg, *found = NULL;
     char *s;
-    unsigned int i;
+	size_t i;
 
     for (g = GUICharacters; g; g = gg) {
         gg = g->next;
@@ -101,8 +101,10 @@ const char *GetGUICharacters(const char *which, const char *defChars) {
             if ((i = strlen(g->chars)) < strlen(defChars)) {
                 s = new char [strlen(defChars) + 1];
                 assert(s != NULL);
-                strcpy(s, g->chars);
-                strcpy(s + i, defChars + i);
+				for( int j = 0; s[j] = g->chars[j]; j++ );
+                //strcpy(s, g->chars);
+				for( int j = 0; s[i+j] = defChars[i+j]; j++ );
+				//strcpy(s + i, defChars + i);
                 delete g->chars;
                 g->chars = s;
             }
@@ -123,8 +125,46 @@ const char *GetGUICharacters(const char *which, const char *defChars) {
     else return defChars;
 }
 
+const wchar_t* GetGUICharacters( const char* which, const wchar_t* defChars ) {
+	GUICharactersEntry* g, * gg, * found = NULL;
+	wchar_t* s;
+	size_t i;
+
+	for( g = GUICharacters; g; g = gg ) {
+		gg = g->next;
+		if( strcmp( g->name, which ) == 0 ) {
+			printf( "This still needs work.\n" );
+			if( ( i = strlen( g->chars ) ) < wcslen( defChars ) ) {
+				s = new wchar_t[wcslen( defChars ) + 1];
+				assert( s != NULL );
+				for( int j = 0; s[j] = g->chars[j]; j++ );
+				//strcpy(s, g->chars);
+				for( int j = 0; s[i + j] = defChars[i + j]; j++ );
+				//strcpy(s + i, defChars + i);
+				delete g->chars;
+				g->chars = (char*)s;
+			}
+			if( found ) {
+				free( found->chars );
+				free( found->name );
+				free( found );
+			}
+			found = g;
+		}
+		else {
+			free( g->name );
+			free( g->chars );
+			free( g );
+		}
+	}
+	GUICharacters = found;
+	if( found ) return (wchar_t*)found->chars;
+	else return defChars;
+}
+
 static void AppendGUICharacters(const char *string) {
     const char *s;
+	const char* s2;
     GUICharactersEntry *g;
 
     s = strchr(string, ':');
@@ -143,7 +183,7 @@ static void AppendGUICharacters(const char *string) {
         strncat(g->name, string, (s - string));
 
         // copy text after ':' to chars...
-        g->chars = strdup(s + 1);
+        g->chars = strdup(s2 + 1);
         assert(g->chars != NULL);
 
         g->next = GUICharacters;
@@ -152,13 +192,13 @@ static void AppendGUICharacters(const char *string) {
 }
 
 static int AddKeyword(ColorKeywords *tab, char color, const char *keyword) {
-    int len;
+	size_t len;
 
     len = strlen(keyword);
     if (len < 1 || len >= CK_MAXLEN) return 0;
 
     if (tab->key[len]) {
-        int lx = strlen(tab->key[len]);
+		size_t lx = strlen(tab->key[len]);
         char *key;
 
         key = (char *)realloc(tab->key[len], lx + len + 1 + 1);

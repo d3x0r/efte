@@ -80,7 +80,7 @@ public:
     virtual int CanQuit() const;
     virtual int ConfQuit(GxView *V, int multiFile = 0);
 
-    virtual int GetStrVar(int var, char *str, int buflen);
+    virtual int GetStrVar(int var, char *str, size_t buflen);
     virtual int GetIntVar(int var, int *value);
 
     virtual void NotifyPipe(int PipeId);
@@ -185,7 +185,7 @@ public:
     void DeleteModel(EModel *M);
     int CanQuit() const;
 
-    int GetStrVar(int var, char *str, int buflen);
+    int GetStrVar(int var, char *str, size_t buflen);
     int GetIntVar(int var, int *value);
 };
 

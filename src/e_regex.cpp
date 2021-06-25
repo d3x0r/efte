@@ -836,7 +836,7 @@ int RxTry(RxNode *rx, const char *s) {
     return 0;
 }
 
-int RxExecMatch(RxNode *Regexp, const char *Data, int Len, const char *Start, RxMatchRes *Match, unsigned int RxOpt) {
+int RxExecMatch(RxNode *Regexp, const char *Data, size_t Len, const char *Start, RxMatchRes *Match, unsigned int RxOpt) {
     if (Regexp == 0) return 0;
 
     match = Match;
@@ -848,7 +848,7 @@ int RxExecMatch(RxNode *Regexp, const char *Data, int Len, const char *Start, Rx
     return RxTry(Regexp, Start);
 }
 
-int RxExec(RxNode *Regexp, const char *Data, int Len, const char *Start, RxMatchRes *Match, unsigned int RxOpt) {
+int RxExec(RxNode *Regexp, const char *Data, size_t Len, const char *Start, RxMatchRes *Match, unsigned int RxOpt) {
     char Ch;
     if (Regexp == 0) return 0;
 
@@ -955,7 +955,7 @@ static int add(int *len, char **s, const char *a, int alen, int &flag) {
     return 0;
 }
 
-int RxReplace(const char *rep, const char *Src, int /*len*/, RxMatchRes match, char **Dest, int *Dlen) {
+int RxReplace(const char *rep, const char *Src, size_t /*len*/, RxMatchRes match, char **Dest, int *Dlen) {
     int dlen = 0;
     char *dest = 0;
     char Ch;

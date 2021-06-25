@@ -88,11 +88,26 @@
 typedef unsigned char TAttr;
 typedef TAttr *PAttr;
 
-#ifdef NTCONSOLE
-typedef unsigned long TCell;
-#else
-typedef unsigned short TCell;
-#endif
+#include <stdint.h>
+#include <inttypes.h>
+
+typedef struct _compat_CHAR_INFO {
+	uint16_t ucs32; // align 32 little endian with unicode char space prefix with wide...
+	union {
+		wchar_t UnicodeChar;
+		char  AsciiChar;
+	} Char;
+	uint16_t Attributes;
+	uint16_t _64Pad;
+} W_CHAR_INFO, * PW_CHAR_INFO;
+
+
+//#ifdef NTCONSOLE
+typedef uint64_t TCell; // really a CHAR_INFO which is Word attribute + (char/wchar) char
+//#else
+//typedef unsigned short TCell;
+//#endif
+
 
 typedef TCell *PCell;
 typedef TCell TDrawBuffer[ConMaxCols];
@@ -191,6 +206,7 @@ int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete);
 int ConPutEvent(TEvent Event);
 
 void MoveCh(PCell B, char Ch, TAttr Attr, int Count);
+void MoveWideChar( PCell B, int Pos, int Width, const wchar_t Ch, TAttr Attr, int Count );
 void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count);
 void MoveMem(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count);
 void MoveStr(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int MaxCount);
@@ -205,7 +221,8 @@ int NewItem(int menu, const char *Name);
 int NewSubMenu(int menu, const char *Name, int submenu, int type);
 int GetMenuId(const char *Name);
 
-char ConGetDrawChar(int index);
+wchar_t ConGetDrawChar( int index );
+uint32_t ConGetDrawWideChar(int index);
 
 extern char WindowFont[64];
 

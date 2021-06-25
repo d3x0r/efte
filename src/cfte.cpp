@@ -75,7 +75,7 @@ static void Fail(CurPos &cp, const char *s, ...) {
 
 static int LoadFile(const char *WhereName, const char *CfgName, int Level = 1, int optional = 0);
 
-static void PutObject(CurPos &cp, int xtag, int xlen, void *obj) {
+static void PutObject(CurPos &cp, int xtag, size_t xlen, void *obj) {
     unsigned char tag = (unsigned char)xtag;
     unsigned short len = (unsigned short)xlen;
 
@@ -133,9 +133,9 @@ int CFteMain() {
     // Make a copy of the root dir from main config file to
     // be able to search in main config's directory first for all includes
     strcpy(ConfigDir, ConfigFileName);
-    for (int i = strlen(ConfigDir) - 1; i >= 0; i--) {
-        if (ISSLASH(ConfigDir[i])) {    
-            ConfigDir[i] = 0;
+    for ( size_t i = strlen(ConfigDir); i > 0; i--) {
+        if (ISSLASH(ConfigDir[i-1])) {    
+            ConfigDir[i-1] = 0;
             break;
         }
     }

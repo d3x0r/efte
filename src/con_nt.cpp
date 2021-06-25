@@ -1,4 +1,4 @@
-/*    con_nt.cpp
+﻿/*    con_nt.cpp
  *
  *    Copyright (c) 2008, eFTE SF Group (see AUTHORS file)
  *    Copyright (c) 1994-1996, Marko Macek
@@ -545,13 +545,19 @@ public:
 #endif
 
 int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
-    int             I;
-    PCell           p = Cell;
+    int             I, J;
+    //PCell           p = (PCell)( &((PW_CHAR_INFO)Cell)->Char );
+	struct _CHAR_INFO p[ConMaxCols];
+
     COORD           corg, csize;
     SMALL_RECT      rcl;
     BOOL            rc;
 
+
     for (I = 0; I < H; I++) {
+		for( int J = 0; J < W; J++ ) {
+			p[J] = *(PCHAR_INFO)&( ((PW_CHAR_INFO)Cell)[I*W+J].Char);
+		}
         corg.X  = corg.Y = 0;
         csize.X = W;
         csize.Y = 1;
@@ -560,11 +566,11 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
         rcl.Bottom = I + Y;// + (isWin95 ? 1 : 0);
         rcl.Right = X + W - 1;// + (isWin95 ? 1 : 0);
 
-        rc = WriteConsoleOutput(OurConOut, (PCHAR_INFO)p, csize, corg, &rcl);
+        rc = WriteConsoleOutputW(OurConOut, ( struct _CHAR_INFO* )p, csize, corg, &rcl);
         if (rc != TRUE) {
-            //("WriteConsoleOutput %d\n", rc);
+            //("WriteConsoleOutputW %d\n", rc);
         }
-        p += W;
+        //p += W;
     }
     return 0;
 }
@@ -572,7 +578,7 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
 int ConGetBox(int X, int Y, int W, int H, PCell Cell) {
     int             I;
     USHORT          WW = W << 1;
-    PCell           p = Cell;
+    CHAR_INFO       p[ConMaxCols];
     COORD           corg, csize;
     SMALL_RECT      rcl;
 
@@ -585,8 +591,11 @@ int ConGetBox(int X, int Y, int W, int H, PCell Cell) {
         rcl.Bottom = I + Y;// + (isWin95 ? 1 : 0);
         rcl.Right = X + W - 1;// + (isWin95 ? 1 : 0);
 
-        ReadConsoleOutput(OurConOut, (PCHAR_INFO)p, csize, corg, &rcl);
-        p += W;
+        ReadConsoleOutput(OurConOut, p, csize, corg, &rcl);
+		for( int J = 0; J < W; J++ ) {
+			(( PCHAR_INFO )& (  ((PW_CHAR_INFO)Cell)[I * W + J].Char))[0] = p[J];
+		}
+		//p += W;
     }
     return 0;
 }
@@ -598,7 +607,11 @@ int ConPutLine(int X, int Y, int W, int H, PCell Cell) {
     BOOL rc;
 
     for (I = 0; I < H; I++) {
-        corg.X = corg.Y = 0;
+		struct _CHAR_INFO p[ConMaxCols];
+		for( int J = 0; J < W; J++ ) {
+			p[J] = *( PCHAR_INFO ) & ( (PW_CHAR_INFO)Cell[I * W + J] )->Char;
+		}
+		corg.X = corg.Y = 0;
         csize.X = W;
         csize.Y = 1;
         rcl.Left = X;
@@ -606,25 +619,30 @@ int ConPutLine(int X, int Y, int W, int H, PCell Cell) {
         rcl.Bottom = I + Y;// + (isWin95 ? 1 : 0);
         rcl.Right = X + W - 1;// + (isWin95 ? 1 : 0);
 
-        rc = WriteConsoleOutput(OurConOut, (PCHAR_INFO)Cell, csize, corg, &rcl);
+        rc = WriteConsoleOutputW(OurConOut, p, csize, corg, &rcl);
         if (rc != TRUE) {
-            //printf("WriteConsoleOutput %d\n", rc);
+            //printf("WriteConsoleOutputW %d\n", rc);
         }
     }
     return 0;
 }
 
 int ConSetBox(int X, int Y, int W, int H, TCell Cell) {
-    int             I;
+    int             I, O;
     COORD           corg, csize;
     SMALL_RECT      rcl;
-    TDrawBuffer B;
+	CHAR_INFO B[ConMaxCols];
 
-    I = W;
-    while (I-- > 0) B[I] = Cell;
+	TCell cur = Cell;
+    I = 0;
+	O = 0;
+	while( I++ < W ) {
+		B[I].Attributes = ( (PW_CHAR_INFO)Cell )->Attributes;
+		B[I].Char.UnicodeChar = ( (PW_CHAR_INFO)Cell )->Char.UnicodeChar;
+	}
 
     for (I = 0; I < H; I++) {
-        corg.X = corg.Y = 0;
+	    corg.X = corg.Y = 0;
         csize.X = W;
         csize.Y = 1;
         rcl.Left = X;
@@ -632,17 +650,20 @@ int ConSetBox(int X, int Y, int W, int H, TCell Cell) {
         rcl.Bottom = I + Y;// - (isWin95 ? 1 : 0);
         rcl.Right = X + W - 1;// - (isWin95 ? 1 : 0);
 
-        WriteConsoleOutput(OurConOut, (PCHAR_INFO)B, csize, corg, &rcl);
+        WriteConsoleOutputW(OurConOut, ( struct _CHAR_INFO *)B, csize, corg, &rcl);
     }
     return 0;
 }
 
 int ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count) {
-    TCell           FillCell;
+    //TCell           FillCell;
     SMALL_RECT      rect, clip;
     COORD           dest;
-
-    MoveCh(&FillCell, ' ', Fill, 1);
+	W_CHAR_INFO  FillCell;
+	FillCell.ucs32 = 0;
+	FillCell.Char.UnicodeChar = ' ';
+	FillCell.Attributes = Fill;
+    //MoveCh(&FillCell, ' ', Fill, 1);
 
     clip.Left = X;
     clip.Top = Y;
@@ -670,7 +691,7 @@ int ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count) {
         break;
     }
 
-    ScrollConsoleScreenBuffer(OurConOut, &rect, &clip, dest, (PCHAR_INFO)&FillCell);
+    ScrollConsoleScreenBuffer(OurConOut, &rect, &clip, dest, (struct _CHAR_INFO *)&FillCell);
     return 0;
 }
 
@@ -867,13 +888,45 @@ int GUI::ShowEntryScreen() {
     return 1;
 }
 
-char ConGetDrawChar(int index) {
+wchar_t ConGetDrawChar(int index) {
     static const char *tab = NULL;
+
+#define DCH_C1 0
+#define DCH_C2 1
+#define DCH_C3 2
+#define DCH_C4 3
+#define DCH_H  4
+#define DCH_V  5
+#define DCH_M1 6
+#define DCH_M2 7
+#define DCH_M3 8
+#define DCH_M4 9
+#define DCH_X  10
+#define DCH_RPTR 11
+#define DCH_EOL 12
+#define DCH_EOF 13
+#define DCH_END 14
+#define DCH_AUP 15
+#define DCH_ADOWN 16
+#define DCH_HFORE 17
+#define DCH_HBACK 18
+#define DCH_ALEFT 19
+#define DCH_ARIGHT 20
+	//  E2 94 8C  ┌
+	//  E2 94 90  ┐
+	//  E2 94 94  └
+	//  E2 94 98  ┘
+
+	// 	E2 95 90  ═
+
+	return L"\u250c\u2510\x2514\x2518\xC4\xB3\xC2\xC3\xB4\xC1\xC5"
+		L"\x1A\xFA\x04\xC4\x18\x19\xB1\xB0\x1B\x1A"[index];
 
     if (!tab) {
         tab = GetGUICharacters("WindowsNT",
-                               "\xDA\xBF\xC0\xD9\xC4\xB3\xC2\xC3\xB4\xC1\xC5"
-                               "\x1A\xFA\x04\xC4\x18\x19\xB1\xB0\x1B\x1A");
+							//L"┘┐┌└┼║═ ╝╚╗╔┴"
+			  "   "
+                               );
     }
     assert(index >= 0 && index < (int)strlen(tab));
 

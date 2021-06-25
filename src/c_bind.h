@@ -143,7 +143,7 @@ public:
     int Macro;
     int Pos;
 
-    int GetStrParam(EView *view, char *str, int buflen);
+    int GetStrParam(EView *view, char *str, size_t buflen);
     int GetIntParam(EView *view, int *value);
 };
 

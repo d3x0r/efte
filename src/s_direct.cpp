@@ -169,10 +169,10 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
     char fullpath[MAXPATH];
     char *name;
     struct tm t;
-    int rc;
+	intptr_t rc;
 
     if (dir)
-        _findclose(dir);
+        _findclose((intptr_t)dir);
 
     /*if (Flags & ffDIRECTORY)
     attr |= FILE_DIRECTORY;
@@ -189,7 +189,7 @@ HANDLE FileFind::FindFirst(FileInfo **fi) {
         //        fprintf(stderr, "%s: %d\n\n", fullpattern, rc);
         return -1;
     }
-    dir = rc;
+    dir = (void*)rc;
 
     name = find.name;
     if (Flags & ffFULLPATH) {
@@ -379,7 +379,7 @@ again:
     struct tm t;
     int rc;
 
-    if ((rc = _findnext(dir,
+    if ((rc = _findnext((intptr_t)dir,
                         &find)) != 0) {
         // fprintf(stderr, "%d\n\n", rc);
         return -1;

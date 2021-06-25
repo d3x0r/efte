@@ -77,6 +77,7 @@ extern char XShellCommand[256];
 extern char BackupDirectory[MAXPATH];
 
 const char *GetGUICharacters(const char *which, const char *defChars);
+const wchar_t* GetGUICharacters( const char* which, const wchar_t* defChars );
 int LoadConfig(int argc, char **argv, const char *CfgFileName);
 int LoadDefaultConfig();
 int GetIndentMode(const char *Str);

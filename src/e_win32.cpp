@@ -35,7 +35,7 @@ int EView::SysShowHelp(ExState &State, const char *word) {
     }
 
     //** Start WinHelp,
-    if (!WinHelp(0, file, HELP_KEY, (DWORD)word)) {
+    if (!WinHelp(0, file, HELP_KEY, (ULONG_PTR)word)) {
         Msg(S_ERROR, "Failed to start WinHelp!");
         return 0;
     }

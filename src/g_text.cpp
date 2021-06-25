@@ -302,8 +302,8 @@ int GViewPeer::DrawScrollBar() {
     TDrawBuffer B;
     int NRows, NCols, I;
     int W, H;
-    char fore = ConGetDrawChar(DCH_HFORE);
-    char back = ConGetDrawChar(DCH_HBACK);
+    wchar_t fore = ConGetDrawChar(DCH_HFORE);
+	wchar_t back = ConGetDrawChar(DCH_HBACK);
 
     ConQuerySize(&W, &H);
 
@@ -386,7 +386,7 @@ int GView::ConClear() {
     TDrawBuffer B;
 
     ConQuerySize(&W, &H);
-    MoveChar(B, 0, W, ' ', 0x07, 1);
+    MoveChar(B, 0, W, L' ', 0x07, 1);
     ConSetBox(0, 0, W, H, B[0]);
     return 1;
 }

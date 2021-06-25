@@ -7,13 +7,13 @@
  *    License or the Artistic License, as specified in the README file.
  *
  */
-
-#include "console.h"
-
 #ifdef  NTCONSOLE
 #   define  WIN32_LEAN_AND_MEAN 1
 #   include <windows.h>
 #endif
+
+#include "console.h"
+
 
 int CStrLen(const char *p) {
     int len = 0, was = 0;
@@ -153,17 +153,35 @@ void MoveBgAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
 #else
 
 void MoveCh(PCell B, char Ch, TAttr Attr, int Count) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     while (Count > 0) {
-        p->Char.AsciiChar = Ch;
+		p->ucs32 = 0;
+		p->Char.UnicodeChar = (unsigned char)Ch;
         p->Attributes = Attr;
         p++;
         Count--;
     }
 }
 
+void MoveWideCh( PCell B, uint32_t Ch, TAttr Attr, int Count ) {
+	PW_CHAR_INFO p = (PW_CHAR_INFO)B;
+	while( Count > 0 ) {
+		if( Ch > 0x100000 ) {
+			p->ucs32 = 0xD800 | ( Ch & 0x3FF );
+			p->Char.UnicodeChar = 0xD800 | ( (Ch>>10) & 0x3FF );
+		}
+		else {
+			p->ucs32 = 0;
+			p->Char.UnicodeChar = Ch;
+		}
+		p->Attributes = Attr;
+		p++;
+		Count--;
+	}
+}
+
 void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     if (Pos < 0) {
         Count += Pos;
         Pos = 0;
@@ -172,14 +190,14 @@ void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count)
     if (Pos + Count > Width) Count = Width - Pos;
     if (Count <= 0) return;
     for (p += Pos; Count > 0; Count--) {
-        p->Char.AsciiChar = Ch;
+        p->Char.UnicodeChar = (unsigned char)Ch;
         p->Attributes = Attr;
         p++;
     }
 }
 
 void MoveMem(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
 
     if (Pos < 0) {
         Count += Pos;
@@ -190,14 +208,14 @@ void MoveMem(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count)
     if (Pos + Count > Width) Count = Width - Pos;
     if (Count <= 0) return;
     for (p += Pos; Count > 0; Count--) {
-        p->Char.AsciiChar = *Ch++;
+        p->Char.UnicodeChar = (unsigned char)*Ch++;
         p->Attributes = Attr;
         p++;
     }
 }
 
 void MoveStr(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int MaxCount) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
 
     if (Pos < 0) {
         MaxCount += Pos;
@@ -208,14 +226,14 @@ void MoveStr(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int MaxCou
     if (Pos + MaxCount > Width) MaxCount = Width - Pos;
     if (MaxCount <= 0) return;
     for (p += Pos; MaxCount > 0 && (*Ch != 0); MaxCount--) {
-        p->Char.AsciiChar = *Ch++;
+        p->Char.UnicodeChar = (unsigned char)*Ch++;
         p->Attributes = Attr;
         p++;
     }
 }
 
 void MoveCStr(PCell B, int Pos, int Width, const char* Ch, TAttr A0, TAttr A1, int MaxCount) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     char was;
     //TAttr A;
 
@@ -235,7 +253,7 @@ void MoveCStr(PCell B, int Pos, int Width, const char* Ch, TAttr A0, TAttr A1, i
             was = 1;
             continue;
         }
-        p->Char.AsciiChar = (unsigned char)(*Ch++);
+        p->Char.UnicodeChar = (unsigned char)(*Ch++);
         if (was) {
             p->Attributes = A1;
             was = 0;
@@ -246,7 +264,7 @@ void MoveCStr(PCell B, int Pos, int Width, const char* Ch, TAttr A0, TAttr A1, i
 }
 
 void MoveAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
 
     if (Pos < 0) {
         Count += Pos;
@@ -260,7 +278,7 @@ void MoveAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
 }
 
 void MoveBgAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
-    PCHAR_INFO p = (PCHAR_INFO) B;
+    PW_CHAR_INFO p = (PW_CHAR_INFO) B;
 
     if (Pos < 0) {
         Count += Pos;

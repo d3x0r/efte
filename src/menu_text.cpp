@@ -70,7 +70,7 @@ static int DrawHMenu(int x, int y, int id, int active) {
 
     ConQuerySize(&Cols, &Rows);
 
-    MoveChar(B, 0, Cols, ' ', hcMenu_Background, Cols);
+    MoveChar(B, 0, Cols, L' ', hcMenu_Background, Cols);
     if (id != -1) {
         for (i = 0; i < Menus[id].Count; i++) {
             if (i == active) {
@@ -83,7 +83,7 @@ static int DrawHMenu(int x, int y, int id, int active) {
 
             if (Menus[id].Items[i].Name) {
                 len = CStrLen(Menus[id].Items[i].Name);
-                MoveChar(B, pos, Cols, ' ', color1, len + 2);
+                MoveChar(B, pos, Cols, L' ', color1, len + 2);
                 MoveCStr(B, pos + 1, Cols, Menus[id].Items[i].Name, color1, color2, len);
                 pos += len + 2;
             } else {
@@ -158,7 +158,7 @@ static int DrawVMenu(int x, int y, int id, int active) {
             if (arg)
                 len2 = CStrLen(arg);
 
-            MoveChar(B, 0, w, ' ', color1, w);
+            MoveChar(B, 0, w, L' ', color1, w);
             MoveCh(B, ConGetDrawChar(DCH_V), hcMenu_Background, 1);
             MoveCh(B + w - 1, ConGetDrawChar(DCH_V), hcMenu_Background, 1);
 

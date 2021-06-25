@@ -776,7 +776,7 @@ int EView::PopGlobalBookmark() {
     return 1;
 }
 
-int EView::GetStrVar(int var, char *str, int buflen) {
+int EView::GetStrVar(int var, char *str, size_t buflen) {
     //switch (var) {
     //}
     return Model->GetStrVar(var, str, buflen);

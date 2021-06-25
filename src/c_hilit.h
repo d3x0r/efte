@@ -175,7 +175,7 @@ typedef struct {
 
 struct HTrans {
     char *match;
-    int matchLen;
+    size_t matchLen;
     long matchFlags;
     int nextState;
     int color;

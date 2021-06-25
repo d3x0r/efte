@@ -54,6 +54,7 @@ class FileFind {
 #elif defined(NT) && !defined(USE_DIRENT)
 	HANDLE dir; // should be HANDLE
 #endif
+#endif
 
 public:
     FileFind(const char *aDirectory, const char *aPattern, int aFlags);

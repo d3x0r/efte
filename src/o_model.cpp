@@ -197,7 +197,7 @@ void EModel::UpdateTitle() {
     }
 }
 
-int EModel::GetStrVar(int var, char *str, int buflen) {
+int EModel::GetStrVar(int var, char *str, size_t buflen) {
     switch (var) {
     case mvCurDirectory:
         return GetDefaultDirectory(this, str, buflen);
