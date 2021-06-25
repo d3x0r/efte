@@ -66,6 +66,6 @@ void ExKey::RepaintStatus() {
 
     ConQuerySize(&W, &H);
 
-    MoveCh(B, ' ', 0x17, W);
+    MoveCh(B, " ", 0x17, W);
     ConPutBox(0, H - 1, W, 1, B);
 }

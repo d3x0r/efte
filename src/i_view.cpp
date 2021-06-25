@@ -140,7 +140,7 @@ void GxView::Repaint() {
         int X, Y;
 
         ConQuerySize(&X, &Y);
-        MoveCh(B, ' ', 0x07, X);
+        MoveCh(B, " ", 0x07, X);
         ConPutLine(0, 0, X, Y, B);
     }
 }

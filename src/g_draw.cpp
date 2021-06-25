@@ -102,7 +102,7 @@ void MoveCStr(PCell B, int Pos, int Width, const char* Ch, TAttr A0, TAttr A1, i
     if (Pos + MaxCount > Width) MaxCount = Width - Pos;
     if (MaxCount <= 0) return;
     for (p += sizeof(TCell) * Pos; MaxCount > 0 && (*Ch != 0); MaxCount--) {
-        if (*Ch == '&' && !was) {
+        if (*Ch == "&" && !was) {
             Ch++;
             MaxCount++;
             was = 1;
@@ -152,18 +152,28 @@ void MoveBgAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
 
 #else
 
-void MoveCh(PCell B, char Ch, TAttr Attr, int Count) {
+void MoveCh(PCell B, const char *Ch, TAttr Attr, int Count) {
     PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     while (Count > 0) {
 		p->ucs32 = 0;
-		p->Char.UnicodeChar = (unsigned char)Ch;
+		//p->Char.UnicodeChar = Ch;
+        p->Char.U8Char[0] = Ch[0];
+        if( Ch[1] ) {
+            p->Char.U8Char[1] = Ch[1];
+            if( Ch[2] ) {
+                p->Char.U8Char[2] = Ch[2];
+                if( Ch[3] ) 
+                    p->Char.U8Char[3] = Ch[3];
+                 else p->Char.U8Char[3] = 0;
+            } else p->Char.U8Char[2] = 0;
+        } else p->Char.U8Char[1] = 0;
         p->Attributes = Attr;
         p++;
         Count--;
     }
 }
 
-void MoveWideCh( PCell B, uint32_t Ch, TAttr Attr, int Count ) {
+void MoveWideCh_( PCell B, uint32_t Ch, TAttr Attr, int Count ) {
 	PW_CHAR_INFO p = (PW_CHAR_INFO)B;
 	while( Count > 0 ) {
 		if( Ch > 0x100000 ) {
@@ -180,7 +190,8 @@ void MoveWideCh( PCell B, uint32_t Ch, TAttr Attr, int Count ) {
 	}
 }
 
-void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count) {
+void MoveChar(PCell B, int Pos, int Width, const char *Ch, TAttr Attr, int Count) {
+
     PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     if (Pos < 0) {
         Count += Pos;
@@ -190,7 +201,21 @@ void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count)
     if (Pos + Count > Width) Count = Width - Pos;
     if (Count <= 0) return;
     for (p += Pos; Count > 0; Count--) {
-        p->Char.UnicodeChar = (unsigned char)Ch;
+        p->Char.U8Char[0] = Ch[0];
+        if( Ch[1] ) {
+            p->Char.U8Char[1] = Ch[1];
+            if( Ch[2] ) {
+                p->Char.U8Char[2] = Ch[2];
+                if( Ch[3] ) 
+                    p->Char.U8Char[3] = Ch[3];
+                else
+                    p->Char.U8Char[3] = 0;
+            }
+            else
+                p->Char.U8Char[2] = 0;
+        }
+        else
+            p->Char.U8Char[1] = 0;
         p->Attributes = Attr;
         p++;
     }
@@ -225,8 +250,21 @@ void MoveStr(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int MaxCou
     if (Pos >= Width) return;
     if (Pos + MaxCount > Width) MaxCount = Width - Pos;
     if (MaxCount <= 0) return;
-    for (p += Pos; MaxCount > 0 && (*Ch != 0); MaxCount--) {
-        p->Char.UnicodeChar = (unsigned char)*Ch++;
+    for( p += Pos; MaxCount > 0 && ( *Ch != 0 ); MaxCount-- ) {
+        int ch = ( p->Char.U8Char[0] = *Ch++ ) & 0xF0;
+        if( ch & 0x80 ) {
+            p->Char.U8Char[1] = *Ch++;
+            if( ( ch & 0x20 ) ) {
+                p->Char.U8Char[2] = *Ch++;
+                if( ( ch & 0x10 ) ) {
+                    p->Char.U8Char[3] = *Ch++;
+                } else
+                    p->Char.U8Char[3] = 0;
+            } else
+                p->Char.U8Char[2] = 0;
+        } else
+            p->Char.U8Char[1] = 0;
+        //p->Char.UnicodeChar = (unsigned char)*Ch++;
         p->Attributes = Attr;
         p++;
     }
@@ -253,7 +291,15 @@ void MoveCStr(PCell B, int Pos, int Width, const char* Ch, TAttr A0, TAttr A1, i
             was = 1;
             continue;
         }
-        p->Char.UnicodeChar = (unsigned char)(*Ch++);
+        p->Char.U8Char[0] = (unsigned char)( *Ch++ );
+        {
+            int n = 1;
+            while( ( Ch[1] & 0xC0 ) == 0x80 ) {
+                p->Char.U8Char[n++] = Ch[1];
+                Ch++;
+            }
+            p->Char.U8Char[n] = 0;
+        }
         if (was) {
             p->Attributes = A1;
             was = 0;

@@ -315,9 +315,9 @@ void ExInput::RepaintStatus() {
     if (LPos + FLen <= Pos) LPos = Pos - FLen + 1;
     if (Pos < LPos) LPos = Pos;
 
-    MoveChar(B, 0, W, ' ', hcEntry_Field, W);
+    MoveChar(B, 0, W, " ", hcEntry_Field, W);
     MoveStr(B, 0, W, Prompt, hcEntry_Prompt, FPos);
-    MoveChar(B, FPos - 2, W, ':', hcEntry_Prompt, 1);
+    MoveChar(B, FPos - 2, W, ":", hcEntry_Prompt, 1);
     MoveStr(B, FPos, W, Line + LPos, hcEntry_Field, FLen);
     MoveAttr(B, FPos + SelStart - LPos, W, hcEntry_Selection, SelEnd - SelStart);
     ConSetCursorPos(FPos + Pos - LPos, H - 1);

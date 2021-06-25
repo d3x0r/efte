@@ -189,9 +189,9 @@ void ExChoice::RepaintStatus() {
         if (Cur < 0) Cur = 0;
     }
 
-    MoveCh(B, ' ', hcChoice_Background, W);
+    MoveCh(B, " ", hcChoice_Background, W);
     MoveStr(B, 0, W, Title, hcChoice_Title, W);
-    MoveChar(B, lTitle, W, ':', hcChoice_Background, 1);
+    MoveChar(B, lTitle, W, ":", hcChoice_Background, 1);
     MoveStr(B, lTitle + 2, W, Prompt, hcChoice_Param, W);
 
     pos = W - lChoice;

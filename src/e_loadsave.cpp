@@ -217,7 +217,7 @@ int EBuffer::LoadFrom(const char *AFileName) {
         }
     }
     if ((BFI(this, BFI_SaveFolds) != 0) || BFI(this, BFI_SaveBookmarks) == 1 || BFI(this, BFI_SaveBookmarks) == 2) {
-        int len_start = 0, len_end = 0;
+        size_t len_start = 0, len_end = 0;
         int level = 0, open = 0;
         int l;
         int pos = -1, startpos;

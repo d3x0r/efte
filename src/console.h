@@ -11,6 +11,9 @@
 #ifndef CONSOLE_H_
 #define CONSOLE_H_
 
+#define USE_UTF8
+
+
 /* don't change these, used as index */
 #define DCH_C1 0
 #define DCH_C2 1
@@ -96,7 +99,8 @@ typedef struct _compat_CHAR_INFO {
 	union {
 		wchar_t UnicodeChar;
 		char  AsciiChar;
-	} Char;
+        uint8_t U8Char[4];
+    } Char;
 	uint16_t Attributes;
 	uint16_t _64Pad;
 } W_CHAR_INFO, * PW_CHAR_INFO;
@@ -205,9 +209,11 @@ int ConQueryMouseButtons(int *ButtonCount);
 int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete);
 int ConPutEvent(TEvent Event);
 
-void MoveCh(PCell B, char Ch, TAttr Attr, int Count);
-void MoveWideChar( PCell B, int Pos, int Width, const wchar_t Ch, TAttr Attr, int Count );
-void MoveChar(PCell B, int Pos, int Width, const char Ch, TAttr Attr, int Count);
+
+
+void MoveCh(PCell B, const char * Ch, TAttr Attr, int Count);
+void MoveWideChar( PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count );
+void MoveChar(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count);
 void MoveMem(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count);
 void MoveStr(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int MaxCount);
 void MoveCStr(PCell B, int Pos, int Width, const  char* Ch, TAttr A0, TAttr A1, int MaxCount);
@@ -221,7 +227,7 @@ int NewItem(int menu, const char *Name);
 int NewSubMenu(int menu, const char *Name, int submenu, int type);
 int GetMenuId(const char *Name);
 
-wchar_t ConGetDrawChar( int index );
+const char* ConGetDrawChar( int index );
 uint32_t ConGetDrawWideChar(int index);
 
 extern char WindowFont[64];

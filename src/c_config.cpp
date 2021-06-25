@@ -44,7 +44,7 @@ extern int ShowHScroll;
 extern int ShowMenuBar;
 
 int SystemClipboard = 0;
-int ScreenSizeX = -1, ScreenSizeY = -1;
+int ScreenSizeX = 80, ScreenSizeY = 25;
 int ScrollBarWidth = 1;
 bool CursorBlink = 0; // default is "no" (same as before)
 bool CursorWithinEOL = 0; // default is "no" (same as before)

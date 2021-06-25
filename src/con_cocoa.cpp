@@ -123,7 +123,7 @@ int ConContinue(void) {
 
 int ConClear(void) {
     TDrawBuffer B;
-    MoveCh(B, ' ', 0x07, ScreenCols);
+    MoveCh(B, " ", 0x07, ScreenCols);
     return ConPutLine(0, 0, ScreenCols, ScreenRows, B);
 }
 

@@ -14,7 +14,7 @@
 #include "sysdep.h"
 
 typedef struct _CurPos {
-    unsigned int sz;
+    size_t sz;
     char *a;
     char *c;
     char *z;

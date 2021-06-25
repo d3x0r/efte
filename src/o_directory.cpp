@@ -43,9 +43,9 @@ EEventMap *EDirectory::GetEventMap() {
 }
 
 void EDirectory::DrawLine(PCell B, int Line, int Col, ChColor color, int Width) {
-    char s[1024];
+    static char s[1024];
 
-    MoveCh(B, ' ', color, Width);
+    MoveCh(B, " ", color, Width);
     if (Files && Line >= 0 && Line < FCount) {
         int Year, Mon, Day, Hour, Min, Sec;
         struct tm *t;
@@ -160,7 +160,7 @@ void EDirectory::RescanList() {
     {
         char CTitle[256];
 
-        sprintf(CTitle, "%d files%c%d dirs%c%lu bytes%c%-200.200s",
+        sprintf(CTitle, "%d files%s%d dirs%s%lu bytes%s%-200.200s",
                 FCount, ConGetDrawChar(DCH_V),
                 DirCount, ConGetDrawChar(DCH_V),
                 SizeCount, ConGetDrawChar(DCH_V),

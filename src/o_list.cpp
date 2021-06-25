@@ -240,7 +240,7 @@ void EListPort::PaintView(int PaintAll) {
                                (hilit ? hcList_HilitSelect : hcList_Selected)) :
                             (mark ? (hilit ? hcList_MarkHilit : hcList_Marked) :
                              (hilit ? hcList_Hilited : hcList_Normal));
-            MoveChar(B, 0, W, ' ', color, W);
+            MoveChar(B, 0, W, " ", color, W);
             if (I + TopRow < List->Count)
                 List->DrawLine(B, I + TopRow, LeftCol, color, W);
             View->MView->ConPutBox(0, I, W, 1, B);
@@ -280,11 +280,11 @@ void EListPort::RepaintStatus() {
         SColor = hcStatus_Active;
     else
         SColor = hcStatus_Normal;
-    MoveCh(B, ' ', SColor, W);
+    MoveCh(B, " ", SColor, W);
     if (View->CurMsg == 0) {
         if (List->Title)
             MoveStr(B, 0, W, List->Title, SColor, W);
-        sprintf(s, "%c%d/%d", ConGetDrawChar(DCH_V), Row + 1, List->Count);
+        sprintf(s, "%s%d/%d", ConGetDrawChar(DCH_V), Row + 1, List->Count);
         MoveStr(B, W - strlen(s), W, s, SColor, W);
     } else {
         MoveStr(B, 0, W, View->CurMsg, SColor, W);

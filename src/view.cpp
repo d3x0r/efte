@@ -490,7 +490,7 @@ void EView::SetMsg(const char *msg) {
         else
             SColor = hcStatus_Normal;
 
-        MoveChar(B, 0, Cols, ' ', SColor, Cols);
+        MoveChar(B, 0, Cols, " ", SColor, Cols);
         MoveStr(B, 0, Cols, CurMsg, SColor, Cols);
         if (MView->Win->GetStatusContext() == MView)
             MView->ConPutBox(0, Rows - 1, Cols, 1, B);

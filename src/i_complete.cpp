@@ -238,7 +238,7 @@ void ExComplete::RepaintStatus() {
 #define COM_ERR  0x1C
 
     ConQuerySize(&W, &H);
-    MoveCh(B, ' ', COM_NORM, W);
+    MoveCh(B, " ", COM_NORM, W);
 
     if ((WordsLast > 0) && (WordBegin != NULL) && (Words != NULL)
             && (Words[WordPos]) != NULL) {

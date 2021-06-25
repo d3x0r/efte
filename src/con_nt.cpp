@@ -68,6 +68,7 @@ static DWORD OldConsoleMode;
 
 static int LastMouseX = 0;
 static int      LastMouseY = 0;
+static int consoleWidth = 80, consoleHeight = 25;
 //static int      isWin95 = 0;
 
 static char winTitle[256] = "eFTE";
@@ -249,15 +250,84 @@ int ReadConsoleEvent(TEvent *E) {
 
     ReadConsoleInput(ConIn, &inp, 1, &nread);
     if (nread != 1) return False;                           // Nothing read after signal??
-
+    if( inp.EventType == FOCUS_EVENT ) {
+        return False;
+    }
     switch (inp.EventType) {
 	case WINDOW_BUFFER_SIZE_EVENT:
         //** Resized the window. Make FTE use the new size..
-        frames->Resize(inp.Event.WindowBufferSizeEvent.dwSize.X, inp.Event.WindowBufferSizeEvent.dwSize.Y);
+        frames->Resize( consoleWidth = inp.Event.WindowBufferSizeEvent.dwSize.X, consoleHeight = inp.Event.WindowBufferSizeEvent.dwSize.Y);
         frames->Repaint();
         return True;
 
     case KEY_EVENT:
+        static int cl;
+        static char buf[256];
+
+        if( !inp.Event.KeyEvent.wVirtualScanCode && !inp.Event.KeyEvent.wVirtualKeyCode ) {
+            int x = ( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar );
+            if( cl || ( x == '\x1b' ) ) {
+                switch( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar ) {
+                case 'A':
+                    // down arrow.
+                    if( cl == 1 ) { cl = 0; Ch = kbUp; }
+                    break;
+                case 'B':
+                    if( cl == 1 ) { cl = 0;  Ch = kbDown; }
+                    break;
+                case 'C':
+                    if( cl == 1 ) { cl = 0;  Ch = kbRight; }
+                    break;
+                case 'D':
+                    if( cl == 1 ) { cl = 0;  Ch = kbLeft; }
+                    break;
+                case 'H':
+                    if( cl == 1 ) { cl = 0;  Ch = kbHome; }
+                    break;
+                case 'F':
+                    if( cl == 1 ) { cl = 0;  Ch = kbEnd; }
+                    break;
+                case '2':
+                    if( cl == 1 ) cl = 4;
+                    break;
+                case '3':
+                    if( cl == 1 ) cl = 5;
+                    break;
+                case '5':
+                    if( cl == 1 ) cl = 2;
+                    break;
+                case '6':
+                    if( cl == 1 ) cl = 3;
+                    break;
+                case '~':
+                    if( cl == 2 ) { cl = 0;  Ch = kbPgUp; }
+                    if( cl == 3 ) { cl = 0;  Ch = kbPgDn; }
+                    if( cl == 4 ) { cl = 0;  Ch = kbIns; }
+                    if( cl == 5 ) { cl = 0;  Ch = kbDel; }
+                    break;
+                case '[':
+                    cl = 1;
+                    break;
+                case '\x1b':
+                    if( cl != 0 ) { dbg( "Broken escape sequence. %d", cl ); }
+                    cl = 0;
+                    break;
+                default:
+                    dbg( "Key unhandled: %d  %c %d\n", cl, inp.Event.KeyEvent.uChar.AsciiChar, inp.Event.KeyEvent.uChar.AsciiChar );
+                    break;
+                }
+            } else {
+                Ch = x;
+            }
+            if( Ch ) {
+                E->Key.Code = Ch | flg;         // Set FTE keycode,
+                E->What = evKeyDown;
+                return True;
+            }
+            return False;
+        } 
+    
+
         if (inp.Event.KeyEvent.bKeyDown) {
             if ((inp.Event.KeyEvent.dwControlKeyState & CAPSLOCK_ON) &&
                     inp.Event.KeyEvent.wVirtualKeyCode != 106 &&
@@ -358,11 +428,6 @@ int ReadConsoleEvent(TEvent *E) {
                 }
             }
         }
-        if (Ch == 0) {
-            if ((Ch = (TKeyCode)(unsigned char)inp.Event.KeyEvent.uChar.AsciiChar) != 0) {
-                if (flg & kfAlt) Ch = toupper(Ch);
-            }
-        }
 
         if (Ch == 0)                            //** Odd: cannot distill keycode.
             return False;
@@ -438,8 +503,24 @@ int ReadConsoleEvent(TEvent *E) {
     }
     return False;
 }
+/*
+static BOOL CALLBACK CODEPAGE_ENUMPROC( LPSTR name ) {
+    dbg( "name of codepage %s", name );
+    GetCPInfoExA(
+        UINT        CodePage,
+        DWORD       dwFlags,
+        LPCPINFOEXA lpCPInfoEx
+    );
+}
 
 
+static void f( void ) {
+    EnumSystemCodePagesA( CODEPAGE_ENUMPROC,
+        CP_SUPPORTED 
+    );
+
+}
+*/
 int ConInit(int /*XSize*/, int /*YSize*/) {
 
     if (Initialized) return 0;
@@ -447,23 +528,15 @@ int ConInit(int /*XSize*/, int /*YSize*/) {
     EventBuf.What = evNone;
     MousePresent    = 0; //MOUSInit();
 
-    //** Get NT/Win95 flag,
-    OSVERSIONINFO   oi;
+    ConOut = GetStdHandle( STD_OUTPUT_HANDLE );
+    ConIn = GetStdHandle( STD_INPUT_HANDLE );
 
-    oi.dwOSVersionInfoSize = sizeof(oi);
-    GetVersionEx((LPOSVERSIONINFO) &oi);
-    //isWin95 = (oi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
-
-    ConOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    ConIn = GetStdHandle(STD_INPUT_HANDLE);
-    codepage = GetConsoleCP();
-    GetConsoleMode(ConIn, &OldConsoleMode);
-    SetConsoleMode(ConIn,
-                   ENABLE_WINDOW_INPUT |
-                   ENABLE_MOUSE_INPUT);
+    OurConOut = ConOut;
+    /*
     OurConOut = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                           0, NULL,
                                           CONSOLE_TEXTMODE_BUFFER, NULL);
+    */
     ConContinue();
 
     // Makes the cursor visible when scrolling up and down. If the cursor is left
@@ -492,13 +565,22 @@ int ConSuspend(void) {
 }
 
 int ConContinue(void) {
-	SetConsoleActiveScreenBuffer(OurConOut);
+	//SetConsoleActiveScreenBuffer(OurConOut);
     GetConsoleMode(ConIn, &OldConsoleMode);
-    SetConsoleMode(ConIn, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
-    {
-        SetConsoleOutputCP(codepage);
-        SetConsoleCP(codepage);
+    if( !SetConsoleMode( ConOut, ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT ) ) {
+        printf( "ERROR:%d", GetLastError() );
     }
+
+    if( !SetConsoleMode(ConIn, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT ) )
+    {
+        printf( "ERROR:%d", GetLastError() );
+    }
+    SetConsoleOutputCP( CP_UTF8 );
+    SetConsoleCP( CP_UTF8 );
+
+    //GetConsoleOutputCP( );
+    //GetConsoleCP( );
+
     return 0;
 }
 
@@ -506,7 +588,7 @@ int ConClear(void) {
     int W, H;
 	TDrawBuffer B;
 
-    MoveChar(B, 0, ConMaxCols, ' ', 0x07, 1);
+    MoveChar(B, 0, ConMaxCols, " ", 0x07, 1);
     if ((ConQuerySize(&W, &H) == 0) &&
             ConSetBox(0, 0, W, H, B[0])) return 0;
     return -1;
@@ -544,38 +626,112 @@ public:
 };
 #endif
 
+static int cursor = 1;
+static void cursOff() {
+    if( cursor ) {
+        puts( "\x1b[?25l" );
+        cursor = 0;
+    }
+
+}
+
+static void cursOn() {
+    if( !cursor ) {
+        puts( "\x1b[?25h" );
+        cursor = 1;
+    }
+}
+
+static void emitAttrib( uint16_t a ) {
+    static uint16_t _a;
+    if( a != _a ) {
+        int f = a & 0x7;
+        int b = (a & 0x70) >> 4;
+        int bl = ( a & 0x80 );
+        int br = a & 8;
+
+        printf( "\x1b[%d;%dm", (bl?100:30) + f, (br?90:40)+b );
+        _a = a;
+    }
+}
+
+
+static void setPos( int x, int y ) {
+    static int _x, _y;
+    if( _x != x || _y != y ) {
+        printf( "\x1b[%d;%dH", y+1, x+1 );
+        //dbg( "set pos int %d %d\n", x, y );
+        _x = x; _y = y;
+    }
+}
+
 int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
     int             I, J;
     //PCell           p = (PCell)( &((PW_CHAR_INFO)Cell)->Char );
-	struct _CHAR_INFO p[ConMaxCols];
+	static char p[ConMaxCols*4];
 
     COORD           corg, csize;
     SMALL_RECT      rcl;
     BOOL            rc;
 
-
-    for (I = 0; I < H; I++) {
+    uint16_t thisAttr = 0;
+    int o; 
+    cursOff();
+    for( I = 0; I < H; I++ ) {
+        o = 0;
 		for( int J = 0; J < W; J++ ) {
-			p[J] = *(PCHAR_INFO)&( ((PW_CHAR_INFO)Cell)[I*W+J].Char);
-		}
-        corg.X  = corg.Y = 0;
-        csize.X = W;
-        csize.Y = 1;
-        rcl.Left = X;
-        rcl.Top = I + Y;
-        rcl.Bottom = I + Y;// + (isWin95 ? 1 : 0);
-        rcl.Right = X + W - 1;// + (isWin95 ? 1 : 0);
+            
+            setPos( X, Y+I );
+            PW_CHAR_INFO cell = (PW_CHAR_INFO)Cell+(I * W + J);
+            if( ( I == 0 && J == 0 ) || cell->Attributes != thisAttr ) {
+                if( o ) {
+                    fwrite( p, o, 1, stdout );
+                    o = 0; // flush anything collected before changing attribute.
+                }
+                emitAttrib( thisAttr = cell->Attributes );
+            }
 
+            //cell->
+            p[o++] = cell->Char.U8Char[0];
+            if( cell->Char.U8Char[1] ) {
+                p[o++] = cell->Char.U8Char[1];
+                if( cell->Char.U8Char[2] ) {
+                    p[o++] = cell->Char.U8Char[2];
+                    if( cell->Char.U8Char[3] ) {
+                        if( ( cell->Char.U8Char[0] & 0xF0 ) != 0xF0 )
+                            DebugBreak();
+                        p[o++] = cell->Char.U8Char[3];
+                    }
+                    else {
+                        if( ( cell->Char.U8Char[0] & 0xE0 ) != 0xE0 )
+                            DebugBreak();
+                    }
+                } else {
+                    if( ( cell->Char.U8Char[0] & 0xF0 ) != 0xC0 )
+                        DebugBreak();
+                }
+            } else {
+                if( p[o - 1] & 0x80 ) DebugBreak();
+            }
+		}
+
+#ifdef USE_UTF8
+        // output in the current attribute.
+        if( o )
+            fwrite( p, o, 1, stdout );
+        //fputs( p, stdout );
+        //printf( "%.*s", o, p );
+        //dbg( "output string is %d", o );
+#else
         rc = WriteConsoleOutputW(OurConOut, ( struct _CHAR_INFO* )p, csize, corg, &rcl);
-        if (rc != TRUE) {
-            //("WriteConsoleOutputW %d\n", rc);
-        }
+#endif
         //p += W;
     }
     return 0;
 }
 
 int ConGetBox(int X, int Y, int W, int H, PCell Cell) {
+    (*(int*)0) = 0;
     int             I;
     USHORT          WW = W << 1;
     CHAR_INFO       p[ConMaxCols];
@@ -663,7 +819,7 @@ int ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count) {
 	FillCell.ucs32 = 0;
 	FillCell.Char.UnicodeChar = ' ';
 	FillCell.Attributes = Fill;
-    //MoveCh(&FillCell, ' ', Fill, 1);
+    //MoveCh(&FillCell, " ", Fill, 1);
 
     clip.Left = X;
     clip.Top = Y;
@@ -707,8 +863,8 @@ int ConQuerySize(int *X, int *Y) {
 	if (queried == 0) {
 		GetConsoleScreenBufferInfo(OurConOut, &csbi);
 	}
-	*X = csbi.dwSize.X;
-	*Y = csbi.dwSize.Y;
+    *X = consoleWidth;// csbi.dwSize.X;
+    *Y = consoleHeight;// csbi.dwSize.Y;
 
     dbg("Console size (%u,%u)\n", *X, *Y);
     return 0;
@@ -727,7 +883,10 @@ int ConSetCursorPos(int X, int Y) {
 	if (xy.X != X || xy.Y != Y) {
 		xy.X = X;
 		xy.Y = Y;
-		SetConsoleCursorPosition(OurConOut, xy);
+        dbg( "setting cursor pos %d,%d", X, Y );
+        printf( "\x1b[%d;%dH", Y + 1, X+1 );
+		//SetConsoleCursorPosition(OurConOut, xy);
+        return 1;
 	}
 
     return 0;
@@ -828,9 +987,9 @@ int SaveScreen() {
 
     SavedScreen = (PCell) malloc(SavedX * SavedY * sizeof(TCell));
 
-    if (SavedScreen)
-		ConGetBox(0, 0, SavedX, SavedY, SavedScreen);
-    ConQueryCursorPos(&SaveCursorPosX, &SaveCursorPosY);
+    //if (SavedScreen)
+	//	ConGetBox(0, 0, SavedX, SavedY, SavedScreen);
+    //ConQueryCursorPos(&SaveCursorPosX, &SaveCursorPosY);
     return 0;
 }
 
@@ -846,6 +1005,7 @@ int RestoreScreen() {
 GUI::GUI(int &argc, char **argv, int XSize, int YSize) {
     fArgc = argc;
     fArgv = argv;
+
     ::ConInit(-1, -1);
     SaveScreen();
     ::ConSetSize(XSize, YSize);
@@ -888,8 +1048,8 @@ int GUI::ShowEntryScreen() {
     return 1;
 }
 
-wchar_t ConGetDrawChar(int index) {
-    static const char *tab = NULL;
+const char * ConGetDrawChar( int index ) {
+    static const char* tab = NULL;
 
 #define DCH_C1 0
 #define DCH_C2 1
@@ -912,15 +1072,25 @@ wchar_t ConGetDrawChar(int index) {
 #define DCH_HBACK 18
 #define DCH_ALEFT 19
 #define DCH_ARIGHT 20
-	//  E2 94 8C  ┌
-	//  E2 94 90  ┐
-	//  E2 94 94  └
-	//  E2 94 98  ┘
+    //  E2 94 8C  ┌
+    //  E2 94 90  ┐
+    //  E2 94 94  └
+    //  E2 94 98  ┘
 
-	// 	E2 95 90  ═
+    // 	E2 95 90  ═
 
-	return L"\u250c\u2510\x2514\x2518\xC4\xB3\xC2\xC3\xB4\xC1\xC5"
-		L"\x1A\xFA\x04\xC4\x18\x19\xB1\xB0\x1B\x1A"[index];
+    static const char utf8Chars[][4] = { "\xe2\x94\x8c", "\xe2\x94\x90", "\xe2\x94\x94", "\xe2\x94\x98"
+        , "\xe2\x94\x80", "\xe2\x94\x82", "\xe2\x94\xac", "\xe2\x94\x9c"
+        , "\xe2\x94\xa4", "\xe2\x94\xb4", "\xe2\x94\xbc", "\xe2\x86\x92"
+        , "\xc2\xb7", "\xe2\x99\xa6", "\xe2\x86\x90", "\xe2\x86\x91"
+        , "\xe2\x86\x93", "\xe2\x96\x92", "\xe2\x96\x91", "\xe2\x86\x90", "\xe2\x86\x92"
+    };
+    return utf8Chars[index];
+
+    static const char* literalUtfChars[] = { "┌", "┐", "└", "┘", "─", "│", "┬", "├", "┤", "┴", "┼",
+        "→", "·", "♦", "←", "↑", "↓", "▒", "░", "←", "→" };
+
+       //return L"┌┐└┘─│┬├┤┴┼→·♦←↑↓▒░←→"[index];
 
     if (!tab) {
         tab = GetGUICharacters("WindowsNT",
@@ -930,7 +1100,7 @@ wchar_t ConGetDrawChar(int index) {
     }
     assert(index >= 0 && index < (int)strlen(tab));
 
-    return tab[index];
+//    return tab[index];
 }
 
 

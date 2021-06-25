@@ -466,7 +466,7 @@ int ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count) {
 #ifdef USE_SCRNMAP
     noCharTrans = 1;
 #endif
-    MoveCh(B, ' ', Fill, W);
+    MoveCh(B, " ", Fill, W);
     ConGetBox(X, Y, W, H, C);
     if (Way == csUp) {
         ConPutBox(X, Y, W, H - Count, C + W * Count);

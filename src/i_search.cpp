@@ -190,7 +190,7 @@ void ExISearch::RepaintStatus() {
     }
 
     sprintf(s, "ISearch [%s]%s", ISearchStr, p);
-    MoveCh(B, ' ', 0x17, W);
+    MoveCh(B, " ", 0x17, W);
     MoveStr(B, 0, W, s, 0x17, W);
     ConPutBox(0, H - 1, W, 1, B);
     ConSetCursorPos(strlen(s) - 1, H - 1);

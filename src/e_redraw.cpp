@@ -140,7 +140,7 @@ void EBuffer::DrawLine(TDrawBuffer B, int VRow, int C, int W, int &HilitX) {
     int StartPos, EndPos;
 
     HilitX = 0;
-    MoveChar(B, 0, W, ' ', hcPlain_Background, W);
+    MoveChar(B, 0, W, " ", hcPlain_Background, W);
     //    if ((VRow == VCount - 1) && !BFI(this, BFI_ForceNewLine)) {
     // if (BFI(this, BFI_ShowMarkers))
     //     MoveChar(B, 0, W, EOF_MARKER, hcPlain_Markers, W);
@@ -393,7 +393,7 @@ void EBuffer::Redraw() {
             SColor = hcStatus_Active;
         else
             SColor = hcStatus_Normal;
-        MoveChar(B, 0, W->Cols, ' ', SColor, W->Cols);
+        MoveChar(B, 0, W->Cols, " ", SColor, W->Cols);
 
         if (V->MView->Win->GetViewContext() == V->MView) {
             V->MView->Win->SetSbVPos(W->TP.Row, W->Rows, VCount + (WeirdScroll ? W->Rows - 1 : 0));
@@ -432,7 +432,7 @@ void EBuffer::Redraw() {
 						NumLines,
 						NumChars,
                         //                    CurPos + 1,
-                        (BFI(this, BFI_Insert)) ? 'I' : ' ',
+                        (BFI(this, BFI_Insert)) ? "I" : " ",
                         (BFI(this, BFI_AutoIndent)) ? 'A' : ' ',
                         //                    (BFI(this, BFI_ExpandTabs))?'T':' ',
                         (BFI(this, BFI_MatchCase)) ? 'C' : ' ',

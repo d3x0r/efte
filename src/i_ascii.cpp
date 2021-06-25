@@ -153,8 +153,12 @@ void ExASCII::RepaintStatus() {
     if (LPos > Pos) LPos = Pos;
     if (LPos < 0) LPos = 0;
 
-    for (int i = 0; i < W; i++)
-        MoveCh(B + i, char(i + LPos), hcAsciiChars, 1);
+    for( int i = 0; i < W; i++ ) {
+        char tmp[2];
+        tmp[0] = i + LPos;
+        tmp[1] = 1;
+        MoveCh( B + i, tmp, hcAsciiChars, 1 );
+    }
     ConSetCursorPos(Pos - LPos, H - 1);
     ConShowCursor();
     ConPutBox(0, H - 1, W, 1, B);

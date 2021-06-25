@@ -158,9 +158,11 @@ int GViewPeer::ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Co
 }
 
 int GViewPeer::ConSetSize(int X, int Y) {
-    wW = X;
-    wH = Y;
-    return 1;
+    if( wW != X || wH != Y ) {
+        wW = X;
+        wH = Y;
+        return 1;
+    }return 0;
 }
 
 int GViewPeer::ConQuerySize(int *X, int *Y) {
@@ -302,8 +304,8 @@ int GViewPeer::DrawScrollBar() {
     TDrawBuffer B;
     int NRows, NCols, I;
     int W, H;
-    wchar_t fore = ConGetDrawChar(DCH_HFORE);
-	wchar_t back = ConGetDrawChar(DCH_HBACK);
+    const char* fore = ConGetDrawChar(DCH_HFORE);
+    const char* back = ConGetDrawChar(DCH_HBACK);
 
     ConQuerySize(&W, &H);
 
@@ -357,7 +359,7 @@ int GViewPeer::DrawScrollBar() {
         }
     }
     if (ShowVScroll && ShowHScroll) {
-        MoveCh(B, ' ', hcScrollBar_Arrows, 1);
+        MoveCh(B, " ", hcScrollBar_Arrows, 1);
         ConPutBox(W, H, 1, 1, B);
     }
 
@@ -371,6 +373,8 @@ GView::GView(GFrame *parent, int XSize, int YSize) {
     Parent = parent;
     Prev = Next = 0;
     Peer = new GViewPeer(this, XSize, YSize);
+    this->width = XSize;
+    this->height = YSize;
     if (Parent)
         Parent->AddView(this);
 }
@@ -386,7 +390,7 @@ int GView::ConClear() {
     TDrawBuffer B;
 
     ConQuerySize(&W, &H);
-    MoveChar(B, 0, W, L' ', 0x07, 1);
+    MoveChar(B, 0, W, " ", 0x07, 1);
     ConSetBox(0, 0, W, H, B[0]);
     return 1;
 }
@@ -412,6 +416,12 @@ int GView::ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count)
 }
 
 int GView::ConSetSize(int X, int Y) {
+    if( this->width != X || this->height != Y ) {
+        this->width = X;
+        this->height = Y;
+    } else return 1;
+
+
     if (Peer->ConSetSize(X, Y))
         Resize(X, Y);
     else
@@ -481,7 +491,9 @@ void GView::HandleEvent(TEvent &/*Event*/) {
 }
 
 void GView::Resize(int /*width*/, int /*height*/) {
-    Repaint();
+    //Repaint();
+
+    // repaint is done after this anyway.
 }
 
 void GView::EndExec(int NewResult) {
@@ -796,7 +808,6 @@ int GFrame::SelectView(GView *view) {
 void GFrame::Resize(int width, int height) {
     GView *V;
     int count = 0;
-
 
     V = Top;
     while (V) {

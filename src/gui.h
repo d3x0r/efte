@@ -29,6 +29,7 @@ public:
     GView *Next, *Prev;
     GViewPeer *Peer;
     int Result;
+    int width, height; // prevent re-sizing when already the right size.
 
     GView(GFrame *parent, int XSize, int YSize);
     virtual ~GView();

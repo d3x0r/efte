@@ -217,7 +217,13 @@ static int CmdLoadConfiguration(int &argc, char **argv) {
     return 1;
 }
 
+#include <iostream>
+
 int main(int argc, char **argv) {
+
+    // or have your user set the console codepage: `chcp 65001`
+
+
 #if defined(_DEBUG) && defined(MSVC) && defined(MSVCDEBUG)
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
@@ -244,7 +250,8 @@ int main(int argc, char **argv) {
 
 #ifdef USE_LOCALE
     // setup locale from environment
-    setlocale(LC_ALL, "");
+    // another way to set UTF8.
+    setlocale(LC_ALL, ".UTF8");
 #endif
 
     if (CmdLoadConfiguration(argc, argv) == 0)
