@@ -340,6 +340,7 @@ const struct {
     TAB(PushGlobalBookmark),
     TAB(PopGlobalBookmark),
     TAB(SetCIndentStyle),
+    TAB(SetJSIndentStyle),
     TAB(SetIndentWithTabs),
     TAB(RunCompiler),
     TAB(FoldCreateAtRoutines),

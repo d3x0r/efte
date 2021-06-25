@@ -12,6 +12,9 @@
 #define SDIRECT_H_
 
 // error handling needs some work
+#ifndef NT
+	typedef int HANDLE;
+#endif
 
 #define fiUNKNOWN   0
 #define fiFILE      1
@@ -41,6 +44,7 @@ public:
 #define ffDIRECTORY  4  // return directories beside files (see ffFAST)
 #define ffHIDDEN     8  // return hidden files (dot-files for UNIX)
 #define ffLINK      16  // diagnose location of symbolic link, not link itself
+
 
 class FileFind {
     char *Directory;

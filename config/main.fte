@@ -8,7 +8,7 @@
 
 #%define(UI_KB)
 %define(UI_FTE)
-#%define(UI_WS)
+%define(UI_WS)
 #%define(UI_NE)
 #%define(UI_BRIEF)
 # experimental
@@ -200,6 +200,7 @@ include 'm_icon.fte';
 include 'm_idl.fte';
 include 'm_ipf.fte';
 include 'm_java.fte';
+include 'm_js.fte';
 include 'm_ldsgml.fte';
 include 'm_lisaac.fte';
 include 'm_lua.fte';

@@ -832,6 +832,8 @@ int EBuffer::ExecCommand(int Command, ExState &State) {
         return FindTagWord(State);
     case ExSetCIndentStyle:
         return SetCIndentStyle(State);
+    case ExSetJSIndentStyle:
+        return SetJSIndentStyle(State);
     case ExBlockMarkFunction:
         return BlockMarkFunction();
     case ExIndentFunction:

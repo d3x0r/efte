@@ -1,0 +1,107 @@
+# JS mode
+
+colorize JS {
+    SyntaxParser = 'JS';
+
+    color {
+	{ 'Normal',	   'Editor_Default' },
+	{ 'Number',	   'Lang_DecimalNumber' },
+	{ 'HexNumber',	   'Lang_HexNumber' },
+	{ 'Punctuation',   'Lang_Punctuation' },
+	{ 'String',	   'Lang_String' },
+	{ 'Comment',	   'Lang_Comment' },
+	{ 'CPreprocessor', 'Lang_Preprocessor' },
+	{ 'Function',	   'Lang_Function' },
+	{ 'Label',	   'Lang_Label' },
+    };
+
+    keyword 'Editor_Keywords' { # any missing ?
+	# standard JS keywords
+	'break',
+	'case',
+	'const',
+	'continue',
+	'default',
+	'do',
+	'else',
+	'import',
+	'export',
+	'for',
+	'goto',
+	'if',
+	'return',
+	'switch',
+        'while',
+        'new',
+        'async',
+        'await',
+        'delete',
+        'try',
+        'catch',
+        'throw',
+        'class',
+        'prototype',
+        'function',
+
+        'then',
+
+
+	# types
+	'var',
+	'let',
+	'const',
+	'Object',
+	'String',
+	'Number',
+	'Promise',
+
+    };
+    # show these as numbers
+    # True, TRUE, False, FALSE, NULL are commonly defined values
+    # but they are not part of C lang
+    keyword 'Lang_DecimalNumber' {
+	'true',
+	'false',
+	'undefined',
+	'null',
+	'NaN',
+	'Infinity',
+    };
+
+}
+
+mode JS: SOURCE {      # JS Mode
+    FileNameRx		= /\.\c{{js}|{mjs}|{cjs}|{json}}$/;
+    HilitOn		= 1;
+    Colorizer		= 'JS';
+    AutoIndent		= 1;
+    IndentMode		= 'C';
+    MatchCase		= 1;
+    Trim		= 1;
+    MultiLineHilit	= 1;
+    AutoHilitParen	= 1;
+
+#    RoutineRegexp	 = /^\w[\w_:*&~]+[\w\\s_:*&~]@\(.*\){\s*\{}?\s*$/;
+#    RoutineRegexp	= /^\w[\w_:*&~]+[\w\s_:*&~]@\([^;]*$/;
+#	RoutineRx      ^\w[\w_:*&]+[\w\s_:*&]@\(
+#	RoutineRx      ^{[a-zA-Z0-9_:*&]#\s*}+\(
+
+    SaveFolds		= 2;	  # save fold info at end of line
+    CommentStart	= ' /*';
+    CommentEnd		= '*/';
+%if(UI_KB)
+    TabSize		= 3; # think twice before changing this, historically
+			     # it's been known to cause a mess in sources ;-)
+    SpaceTabs		= 0;
+    IndentWithTabs	= 1;
+    CursorThroughTabs	= 1;
+    DeleteKillTab	= 0;
+    DeleteKillBlock	= 0;
+    BackSpKillTab	= 0;
+    BackSpUnindents	= 0;
+    Abbreviations	= 1;
+    UndoMoves		= 0;
+%endif
+}
+
+oinclude 'mym_js.fte';

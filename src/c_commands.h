@@ -742,6 +742,7 @@ typedef enum {
     ExConfigRecompile,
     /// Recompile editor configuration
 
+    ExSetJSIndentStyle,
     ExSetCIndentStyle,
     /// Set C indentation style parameters
     /// Has the following parameters:
