@@ -155,7 +155,7 @@ void MoveBgAttr(PCell B, int Pos, int Width, TAttr Attr, int Count) {
 void MoveCh(PCell B, const char *Ch, TAttr Attr, int Count) {
     PW_CHAR_INFO p = (PW_CHAR_INFO) B;
     while (Count > 0) {
-		p->ucs32 = 0;
+		//p->ucs32 = 0;
 		//p->Char.UnicodeChar = Ch;
         p->Char.U8Char[0] = Ch[0];
         if( Ch[1] ) {
@@ -167,6 +167,8 @@ void MoveCh(PCell B, const char *Ch, TAttr Attr, int Count) {
                  else p->Char.U8Char[3] = 0;
             } else p->Char.U8Char[2] = 0;
         } else p->Char.U8Char[1] = 0;
+        if( ( p->Char.U8Char[1] && p->Char.U8Char[2] ) && ( ( p->Char.U8Char[0] & 0xF0 ) != 0xE0 ) )
+            DebugBreak();
         p->Attributes = Attr;
         p++;
         Count--;
@@ -176,15 +178,31 @@ void MoveCh(PCell B, const char *Ch, TAttr Attr, int Count) {
 void MoveWideCh_( PCell B, uint32_t Ch, TAttr Attr, int Count ) {
 	PW_CHAR_INFO p = (PW_CHAR_INFO)B;
 	while( Count > 0 ) {
-		if( Ch > 0x100000 ) {
-			p->ucs32 = 0xD800 | ( Ch & 0x3FF );
-			p->Char.UnicodeChar = 0xD800 | ( (Ch>>10) & 0x3FF );
-		}
-		else {
-			p->ucs32 = 0;
-			p->Char.UnicodeChar = Ch;
-		}
-		p->Attributes = Attr;
+        if( Ch > 0x7F ) {
+            if( Ch > 0xffff ) {
+                p->Char.U8Char[0] = ( Ch >> 18 ) | 0xF0;
+                p->Char.U8Char[1] = ( ( Ch >> 12 ) & 0x3f ) | 0x80;
+                p->Char.U8Char[2] = ( ( Ch >> 6 ) & 0x3f ) | 0x80;
+                p->Char.U8Char[3] = ( ( Ch ) & 0x3f ) | 0x80;
+            }
+            else {
+                if( Ch > 0x7ff ) {
+                    p->Char.U8Char[0] = ( Ch >> 12 ) | 0xE0;
+                    p->Char.U8Char[1] = ( ( Ch >> 6 ) & 0x3f ) | 0x80;
+                    p->Char.U8Char[2] = ( ( Ch ) & 0x3f ) | 0x80;
+                    p->Char.U8Char[3] = 0;
+                } else {
+                    p->Char.U8Char[0] = ( Ch >> 6 ) | 0xC0;
+                    p->Char.U8Char[1] = ( ( Ch ) & 0x3f ) | 0x80;
+                    p->Char.U8Char[2] = 0;
+                }
+            }
+        } else {
+            p->Char.U8Char[0] = Ch;
+            p->Char.U8Char[1] = 0;
+        }
+
+        p->Attributes = Attr;
 		p++;
 		Count--;
 	}
@@ -233,7 +251,29 @@ void MoveMem(PCell B, int Pos, int Width, const char* Ch, TAttr Attr, int Count)
     if (Pos + Count > Width) Count = Width - Pos;
     if (Count <= 0) return;
     for (p += Pos; Count > 0; Count--) {
-        p->Char.UnicodeChar = (unsigned char)*Ch++;
+        p->Char.U8Char[0] = (unsigned char)*Ch++;
+        if( Ch[0] & 0x80 ) {
+            if( ( Ch[1] & 0xC0 ) == 0x80 ) {
+                Ch++;
+                p->Char.U8Char[1] = Ch[1];
+                if( ( Ch[2] & 0xC0 ) == 0x80 ) {
+                    Ch++;
+                    p->Char.U8Char[2] = Ch[2];
+                    if( ( Ch[3] & 0xC0 ) == 0x80 ) {
+                        Ch++;
+                        p->Char.U8Char[3] = Ch[3];
+                    }
+                    else
+                        p->Char.U8Char[3] = 0;
+                }
+                else
+                    p->Char.U8Char[2] = 0;
+            }
+            else
+                p->Char.U8Char[1] = 0;
+        } else
+            p->Char.U8Char[1] = 0;
+
         p->Attributes = Attr;
         p++;
     }

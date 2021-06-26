@@ -65,18 +65,28 @@ int EBuffer::ScreenPos(ELine *L, int Offset) {
 
         if (Ofs > Len) {
             while (Len > 0) {
-                if (*p++ != '\t')
+                if( *p++ != '\t' ) {
+                    if( p[-1] & 0x80 ) {
+                        while( p[0] & 0xC0 == 0x80 ) {
+                            p++;
+                        }
+                    }
                     Pos++;
-                else
+                } else
                     Pos = NextTab(Pos, TabSize);
                 Len--;
             }
             Pos += Ofs - L->Count;
         } else {
             while (Ofs > 0) {
-                if (*p++ != '\t')
+                if( *p++ != '\t' ) {
+                    if( p[-1] & 0x80 ) {
+                        while( p[0] & 0xC0 == 0x80 ) {
+                            p++;
+                        }
+                    }
                     Pos++;
-                else
+                } else
                     Pos = NextTab(Pos, TabSize);
                 Ofs--;
             }
@@ -98,9 +108,15 @@ int EBuffer::CharOffset(ELine *L, int ScreenPos) {
         int Len = L->Count;
 
         while (Len > 0) {
-            if (*p++ != '\t')
+            if( *p++ != '\t' ) {
+                // skip extra utf8 chars in this spot.
+                if( p[-1] & 0x80 ) {
+                    while( p[0] & 0xC0 == 0x80 ) {
+                        p++;
+                    }
+                }
                 Pos++;
-            else
+            } else
                 Pos = NextTab(Pos, TabSize);
             if (Pos > ScreenPos)
                 return Ofs;

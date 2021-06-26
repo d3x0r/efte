@@ -221,9 +221,6 @@ static int CmdLoadConfiguration(int &argc, char **argv) {
 
 int main(int argc, char **argv) {
 
-    // or have your user set the console codepage: `chcp 65001`
-
-
 #if defined(_DEBUG) && defined(MSVC) && defined(MSVCDEBUG)
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);

@@ -95,7 +95,7 @@ typedef TAttr *PAttr;
 #include <inttypes.h>
 
 typedef struct _compat_CHAR_INFO {
-	uint16_t ucs32; // align 32 little endian with unicode char space prefix with wide...
+	//uint16_t ucs32; // align 32 little endian with unicode char space prefix with wide...
 	union {
 		wchar_t UnicodeChar;
 		char  AsciiChar;

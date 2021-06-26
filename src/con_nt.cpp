@@ -47,6 +47,7 @@
 #include "s_files.h"
 #include "s_string.h"
 #include "c_config.h"
+#include "log.h"
 
 #define True    1
 #define False   0
@@ -247,23 +248,28 @@ int ReadConsoleEvent(TEvent *E) {
     TKeyCode        flg = 0;
     ULONG           flags;
     int             I, i;
+    STARTFUNC( __func__ );
 
     ReadConsoleInput(ConIn, &inp, 1, &nread);
     if (nread != 1) return False;                           // Nothing read after signal??
+    LOG << "input event:" << inp.EventType << ENDLINE;
     if( inp.EventType == FOCUS_EVENT ) {
         return False;
     }
     switch (inp.EventType) {
 	case WINDOW_BUFFER_SIZE_EVENT:
         //** Resized the window. Make FTE use the new size..
-        frames->Resize( consoleWidth = inp.Event.WindowBufferSizeEvent.dwSize.X, consoleHeight = inp.Event.WindowBufferSizeEvent.dwSize.Y);
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo( OurConOut, &csbi );
+        frames->Resize( consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left, consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top );
+        //frames->Resize( consoleWidth = inp.Event.WindowBufferSizeEvent.dwSize.X, consoleHeight = inp.Event.WindowBufferSizeEvent.dwSize.Y);
         frames->Repaint();
         return True;
 
     case KEY_EVENT:
         static int cl;
         static char buf[256];
-
+        LOG << "Depressed: sc:" << inp.Event.KeyEvent.wVirtualScanCode <<" vk:"<< inp.Event.KeyEvent.wVirtualKeyCode << " asc:" << inp.Event.KeyEvent.uChar.AsciiChar << ENDLINE;
         if( !inp.Event.KeyEvent.wVirtualScanCode && !inp.Event.KeyEvent.wVirtualKeyCode ) {
             int x = ( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar );
             if( cl || ( x == '\x1b' ) ) {
@@ -310,7 +316,7 @@ int ReadConsoleEvent(TEvent *E) {
                     break;
                 case '\x1b':
                     if( cl != 0 ) { dbg( "Broken escape sequence. %d", cl ); }
-                    cl = 0;
+                    cl = 1;
                     break;
                 default:
                     dbg( "Key unhandled: %d  %c %d\n", cl, inp.Event.KeyEvent.uChar.AsciiChar, inp.Event.KeyEvent.uChar.AsciiChar );
@@ -567,7 +573,7 @@ int ConSuspend(void) {
 int ConContinue(void) {
 	//SetConsoleActiveScreenBuffer(OurConOut);
     GetConsoleMode(ConIn, &OldConsoleMode);
-    if( !SetConsoleMode( ConOut, ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT ) ) {
+    if( !SetConsoleMode( ConOut, ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT | DISABLE_NEWLINE_AUTO_RETURN ) ) {
         printf( "ERROR:%d", GetLastError() );
     }
 
@@ -642,6 +648,9 @@ static void cursOn() {
     }
 }
 
+
+const int attMap[] = {0,4,2,6,1,5,3,7 };
+
 static void emitAttrib( uint16_t a ) {
     static uint16_t _a;
     if( a != _a ) {
@@ -649,18 +658,21 @@ static void emitAttrib( uint16_t a ) {
         int b = (a & 0x70) >> 4;
         int bl = ( a & 0x80 );
         int br = a & 8;
-
-        printf( "\x1b[%d;%dm", (bl?100:30) + f, (br?90:40)+b );
+        dbg( "Changing attribute:%x\n", a );
+        printf( "\x1b[%d;%dm", (br?40:40)+attMap[b], (bl?100:30) + attMap[f] );
         _a = a;
     }
 }
 
-
+int cursorDirty = 1;
 static void setPos( int x, int y ) {
     static int _x, _y;
-    if( _x != x || _y != y ) {
+    if( cursorDirty || _x != x || _y != y ) 
+    {
+        if( y > 28 ) DebugBreak();
         printf( "\x1b[%d;%dH", y+1, x+1 );
-        //dbg( "set pos int %d %d\n", x, y );
+        dbg( "set pos int %d %d\n", x, y );
+        cursorDirty = 0;
         _x = x; _y = y;
     }
 }
@@ -685,9 +697,11 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
             PW_CHAR_INFO cell = (PW_CHAR_INFO)Cell+(I * W + J);
             if( ( I == 0 && J == 0 ) || cell->Attributes != thisAttr ) {
                 if( o ) {
+                    if( cell->Attributes == 31 ) DebugBreak();
                     fwrite( p, o, 1, stdout );
+                    dbg( "Sub string is %x before %d [%s]\n", cell->Attributes, o, p );
                     o = 0; // flush anything collected before changing attribute.
-                }
+                } else dbg( "Changing attribute:%x", cell->Attributes );
                 emitAttrib( thisAttr = cell->Attributes );
             }
 
@@ -703,7 +717,7 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
                         p[o++] = cell->Char.U8Char[3];
                     }
                     else {
-                        if( ( cell->Char.U8Char[0] & 0xE0 ) != 0xE0 )
+                        if( ( cell->Char.U8Char[0] & 0xF0 ) != 0xE0 )
                             DebugBreak();
                     }
                 } else {
@@ -711,17 +725,22 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
                         DebugBreak();
                 }
             } else {
-                if( p[o - 1] & 0x80 ) DebugBreak();
+                if( p[o - 1] & 0x80 ) {
+                    // not utf8 file...
+                    //DebugBreak();
+                }
             }
 		}
 
 #ifdef USE_UTF8
         // output in the current attribute.
-        if( o )
+        if( o ) {
             fwrite( p, o, 1, stdout );
-        //fputs( p, stdout );
-        //printf( "%.*s", o, p );
-        //dbg( "output string is %d", o );
+            //fputs( p, stdout );
+            //printf( "%.*s", o, p );
+            cursorDirty = 1;
+        }
+        dbg( "output string is %d [%s]\n", o, p );
 #else
         rc = WriteConsoleOutputW(OurConOut, ( struct _CHAR_INFO* )p, csize, corg, &rcl);
 #endif
@@ -816,9 +835,10 @@ int ConScroll(int Way, int X, int Y, int W, int H, TAttr Fill, int Count) {
     SMALL_RECT      rect, clip;
     COORD           dest;
 	W_CHAR_INFO  FillCell;
-	FillCell.ucs32 = 0;
-	FillCell.Char.UnicodeChar = ' ';
-	FillCell.Attributes = Fill;
+	//FillCell.ucs32 = 0;
+	FillCell.Char.U8Char[0] = ' ';
+    FillCell.Char.U8Char[1] = 0;
+    FillCell.Attributes = Fill;
     //MoveCh(&FillCell, " ", Fill, 1);
 
     clip.Left = X;
@@ -863,8 +883,8 @@ int ConQuerySize(int *X, int *Y) {
 	if (queried == 0) {
 		GetConsoleScreenBufferInfo(OurConOut, &csbi);
 	}
-    *X = consoleWidth;// csbi.dwSize.X;
-    *Y = consoleHeight;// csbi.dwSize.Y;
+    *X = consoleWidth = csbi.srWindow.Right- csbi.srWindow.Left;// csbi.dwSize.X;
+    *Y = consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top;// csbi.dwSize.Y;
 
     dbg("Console size (%u,%u)\n", *X, *Y);
     return 0;
@@ -2084,6 +2104,8 @@ int GetPipeEvent(int i, TEvent *Event) {
 
 int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete) {
     //** Any saved events left?
+    STARTFUNC( __func__ );
+    LOG << "ConGetEvent:" << ENDLINE;
     if (EventBuf.What != evNone) {
         *Event = EventBuf;
         if (Delete) EventBuf.What = evNone;
@@ -2115,8 +2137,10 @@ int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete) {
         if (rc != WAIT_FAILED && (rc >= WAIT_OBJECT_0 && rc < WAIT_OBJECT_0 + nh)) {
             i       = rc - WAIT_OBJECT_0;                                   // Get item that signalled new data
             if (i == 0) {                                   // Was console?
-                if (ReadConsoleEvent(Event))                    // Get console,
+                if( ReadConsoleEvent( Event ) ) {         // Get console,
+                    LOG << "This is a long loop" << ENDLINE;
                     return 0;                                                       // And exit if valid,
+                }
             } else {
                 GetPipeEvent(i - 1, Event);                     // Read data from pipe.
                 return 0;

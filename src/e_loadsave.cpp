@@ -47,7 +47,7 @@ int EBuffer::LoadFrom(const char *AFileName) {
     int strip = BFI(this, BFI_StripChar);
     int lchar = BFI(this, BFI_LineChar);
     int margin = BFI(this, BFI_LoadMargin);
-
+    int skips = 0;
     FileOk = 0;
     fd = open(AFileName, O_RDONLY | O_BINARY, 0);
     if (fd == -1) {
@@ -172,7 +172,10 @@ int EBuffer::LoadFrom(const char *AFileName) {
             if (lchar != -1) // skip LINE terminator/separator
                 p++;
         } while (lf);
-        Msg(S_INFO, "Loading: %d lines, %d bytes.", Lines, numChars);
+        if( ++skips > 32 ) {
+            Msg( S_INFO, "Loading: %d lines, %d bytes.", Lines, numChars );
+            skips = 0;
+        }
     }
 
     if ((RCount == 0) || (lm > 0) || !BFI(this, BFI_ForceNewLine)) {

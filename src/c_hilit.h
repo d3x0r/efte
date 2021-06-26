@@ -60,9 +60,12 @@ int Indent_SIMPLE(EBuffer *B, int Line, int PosCursor);
  * NT has 2-byte charcode and attribute... Following is not portable to non-
  * intel; should be replaced by formal TCell definition' usage instead of
  * assumed array.. (Jal)
+ * 
+ * actually all chars are 4 byte sequences of Utf8 strins.... so it's 32 bits not 16.
+ *   - d3x0r
  */
 #ifdef NTCONSOLE
-#    define PCLI unsigned short
+#    define PCLI unsigned long
 #else
 #    define PCLI unsigned char
 #endif
@@ -80,7 +83,8 @@ int Indent_SIMPLE(EBuffer *B, int Line, int PosCursor);
     if (B) \
     if (BPos >= 0 && BPos < Width) { \
     BPtr = (PCLI *) (B + BPos); \
-    BPtr[0] = *p; \
+    { uint32_t x = (uint8_t)(p[0]); if( ( p[1] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[1] & 0x3f; if( ( p[2] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[2] & 0x3f; if( ( p[3] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[1] & 0x3f; x &= 0x1fffff; p += 3; } else { x &= 0xFFFF; p += 2; } } else { x &= 0x3FF; p += 1; } }  \
+    BPtr[0] = x; } \
     BPtr[1] = HILIT_CLRD(); \
     } \
     if (StateMap) StateMap[i] = (hsState)(State & X_MASK); \

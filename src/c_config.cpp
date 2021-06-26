@@ -530,14 +530,15 @@ static unsigned char GetObj(CurPos &cp, unsigned short &len) {
 }
 
 static const char *GetCharStr(CurPos &cp, unsigned short len) {
-    STARTFUNC("GetCharStr");
-    LOG << "Length: " << len << ENDLINE;
+    //STARTFUNC("GetCharStr");
+    //LOG << "Length: " << len << ENDLINE;
 
     char *p = (char *)malloc(cache[cpos].len);
     memcpy(p, cache[cpos].obj, cache[cpos].len);
     cpos++;
 
-    ENDFUNCRC(p);
+    //ENDFUNCRC(p);
+    return p;
 }
 
 static int GetNum(CurPos &cp, long &num) {

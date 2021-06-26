@@ -9,7 +9,7 @@
  */
 
 #include "fte.h"
-
+#include "log.h"
 EModel* ActiveModel = 0;
 
 EModel *FindModelID(EModel *Model, int ID) {
@@ -126,9 +126,10 @@ void EModel::Msg(int level, const char *s, ...) {
     va_start(ap, s);
     vsprintf(msgbuftmp, s, ap);
     va_end(ap);
-
-    if (level != S_BUSY)
-        View->SetMsg(msgbuftmp);
+    //dbg( "%s", msgbuftmp );
+    if( level != S_BUSY ) {
+        View->SetMsg( msgbuftmp );
+    }
 }
 
 int EModel::CanQuit() const {
