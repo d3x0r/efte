@@ -76,6 +76,7 @@ int Indent_SIMPLE(EBuffer *B, int Line, int PosCursor);
 #ifndef X_MASK
 #define X_MASK 0xFF
 #endif
+extern void dbg( const char* s, ... );
 
 #define ColorChar() \
     do {\
@@ -83,7 +84,16 @@ int Indent_SIMPLE(EBuffer *B, int Line, int PosCursor);
     if (B) \
     if (BPos >= 0 && BPos < Width) { \
     BPtr = (PCLI *) (B + BPos); \
-    { uint32_t x = (uint8_t)(p[0]); if( ( p[1] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[1] & 0x3f; if( ( p[2] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[2] & 0x3f; if( ( p[3] & 0xc0 ) == 0x80 ) { x <<= 6; x |= p[1] & 0x3f; x &= 0x1fffff; p += 3; } else { x &= 0xFFFF; p += 2; } } else { x &= 0x3FF; p += 1; } }  \
+    { uint32_t x = ((uint32_t)((uint8_t*)p)[0]); \
+        if( ( p[1] & 0xc0 ) == 0x80 ) { \
+            x = ((((uint32_t)((uint8_t*)p)[1]) << 8) |x); \
+            if( ( p[2] & 0xc0 ) == 0x80 ) { \
+                x = ((((uint32_t)((uint8_t*)p)[2]) << 16) |x); \
+                if( ( p[3] & 0xc0 ) == 0x80 ) { \
+                    x = (((uint32_t)((uint8_t*)p)[3]) << 24)|x; p += 3; \
+                } else { p += 2; }\
+            } else { p += 1; } \
+     }  \
     BPtr[0] = x; } \
     BPtr[1] = HILIT_CLRD(); \
     } \

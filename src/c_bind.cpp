@@ -540,7 +540,7 @@ int ParseKey(const char *Key, KeySel &ks) {
     return 0;
 }
 
-int GetKeyName(char *Key, int KeySize, KeySel &ks) {
+int GetKeyName(char *Key, size_t KeySize, KeySel &ks) {
     strlcpy(Key, "", KeySize);
 
     if (ks.Key  & kfAlt)   strlcat(Key, "A+", KeySize);

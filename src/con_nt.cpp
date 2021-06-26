@@ -80,7 +80,7 @@ int codepage;
 #define dbm(x)          //printf(x), Sleep(3000)
 
 
-#if 0
+#if 1
 void dbg(const char* s, ...) {
 }
 #else
@@ -669,7 +669,7 @@ static void setPos( int x, int y ) {
     static int _x, _y;
     if( cursorDirty || _x != x || _y != y ) 
     {
-        if( y > 28 ) DebugBreak();
+        //if( y > 28 ) DebugBreak();
         printf( "\x1b[%d;%dH", y+1, x+1 );
         dbg( "set pos int %d %d\n", x, y );
         cursorDirty = 0;
@@ -699,9 +699,9 @@ int ConPutBox(int X, int Y, int W, int H, PCell Cell) {
                 if( o ) {
                     if( cell->Attributes == 31 ) DebugBreak();
                     fwrite( p, o, 1, stdout );
-                    dbg( "Sub string is %x before %d [%s]\n", cell->Attributes, o, p );
+                    //dbg( "Sub string is %x before %d [%s]\n", cell->Attributes, o, p );
                     o = 0; // flush anything collected before changing attribute.
-                } else dbg( "Changing attribute:%x", cell->Attributes );
+                } //else dbg( "Changing attribute:%x", cell->Attributes );
                 emitAttrib( thisAttr = cell->Attributes );
             }
 

@@ -926,7 +926,7 @@ int EBuffer::DelText(int Row, int Col, int ACount, int DoMark) {
     return 1;
 }
 
-int EBuffer::InsText(int Row, int Col, int ACount, const char *ABuffer, int DoMark) {
+int EBuffer::InsText(int Row, int Col, size_t ACount, const char *ABuffer, int DoMark) {
     int B, L;
 
 //    printf("InsText: %d:%d %d\n", Row, Col, ACount);
@@ -957,7 +957,7 @@ int EBuffer::PadLine(int Row, int Length) {
     return 1;
 }
 
-int EBuffer::InsLineText(int Row, int Col, int ACount, int LCol, PELine Line) {
+int EBuffer::InsLineText(int Row, int Col, size_t ACount, int LCol, PELine Line) {
     int Ofs, Pos, TPos, C, B, L;
 
     //fprintf(stderr, "\n\nInsLineText: %d:%d %d %d", Row, Col, ACount, LCol);

@@ -343,8 +343,8 @@ public:
     int InsertIndent(int Row, int Ofs, int ACount);
     int ChgChars(int Row, int Ofs, int ACount, const char *Buffer);
     int DelText(int Row, int Col, int ACount, int DoMark = 1);
-    int InsText(int Row, int Col, int ACount, const char *Buffer, int DoMark = 1);
-    int InsLineText(int Row, int Col, int ACount, int Pos, PELine Line);
+    int InsText(int Row, int Col, size_t ACount, const char *Buffer, int DoMark = 1);
+    int InsLineText(int Row, int Col, size_t ACount, int Pos, PELine Line);
     int SplitLine(int Row, int Col);
     int JoinLine(int Row, int Col);
     int CanUnfold(int Row) const;

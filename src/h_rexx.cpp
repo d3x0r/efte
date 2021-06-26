@@ -149,7 +149,7 @@ int REXX_Do_Offset = 0;
 
 
 static int Match(int Len, int Pos, hsState *StateMap, const char *Text, const char *String, hsState State) {
-    int L = strlen(String);
+    size_t L = strlen(String);
 
     if (Pos + L <= Len)
         if (StateMap == NULL || IsState(StateMap + Pos, State, L))
@@ -159,7 +159,7 @@ static int Match(int Len, int Pos, hsState *StateMap, const char *Text, const ch
 }
 
 static int Match2(int Len, int Pos, hsState *StateMap, const char *Text, const char *String, hsState State) {
-    int L = strlen(String);
+    size_t L = strlen(String);
 
     int i;
     for (i = 0; i < Pos; i++)

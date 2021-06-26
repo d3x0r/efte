@@ -887,7 +887,8 @@ int EBuffer::TypeChar(char aCh) { // does abbrev expansion if appropriate
                 return 0;
     if (ChClass(aCh) == 0 && BFI(this, BFI_Abbreviations) == 1) {
         PELine L = VLine(CP.Row);
-        int C, P, P1, C1, Len, R;
+        int C, P, P1, C1, R;
+        size_t Len;
         char Str[256];
         EAbbrev *ab;
 

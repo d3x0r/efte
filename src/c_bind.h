@@ -164,7 +164,7 @@ int CmdNum(const char *Cmd);
 void ExecKey(EKey *Key);
 EKey *SetKey(EEventMap *aMap, const char *Key);
 int ParseKey(const char *Key, KeySel &ks);
-int GetKeyName(char *Key, int KeySize, KeySel &ks);
+int GetKeyName(char *Key, size_t KeySize, KeySel &ks);
 
 void DefineWord(const char *s);
 int NewCommand(const char *Name);
