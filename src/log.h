@@ -105,7 +105,7 @@ using namespace std;
 class GlobalLog {
     friend class FunctionLog;
 private:
-    char* m_strLogFile = "./fte.log";
+    char* m_strLogFile;
     ofstream    m_ofsLog;
 
     bool        m_bOpened;
@@ -115,7 +115,7 @@ private:
     ostream&    operator()();
 
 public:
-    GlobalLog() : m_strLogFile("./fte.log"), m_bOpened(false) {}
+    GlobalLog() : m_strLogFile(strdup("./fte.log")), m_bOpened(false) {}
     GlobalLog(char const* strLogFile) : m_strLogFile(strdup(strLogFile)), m_bOpened(false) {}
 
     virtual ~GlobalLog() {

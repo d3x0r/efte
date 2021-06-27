@@ -558,19 +558,34 @@ static int GetNum(CurPos &cp, long &num) {
 }
 
 static int ReadCommands(CurPos &cp, const char *Name) {
+#if _DEBUG_COMMANDS
     STARTFUNC("ReadCommands");
     LOG << "Name = " << (Name != NULL ? Name : "(null)") << ENDLINE;
-
+#endif
     unsigned char obj;
     unsigned short len;
     long Cmd = NewCommand(Name);
     long cmdno;
 
-    if (GetObj(cp, len) != CF_INT) ENDFUNCRC(-1);
-    if (GetNum(cp, cmdno) == 0) ENDFUNCRC(-1);
+    if (GetObj(cp, len) != CF_INT)
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+    if (GetNum(cp, cmdno) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
     if (cmdno != (Cmd | CMD_EXT)) {
         fprintf(stderr, "Bad Command map %s -> %ld != %ld\n", Name, Cmd, cmdno);
+#if _DEBUG_COMMANDS
         ENDFUNCRC(-1);
+#else
+	return -1;
+#endif
     }
 
     while ((obj = GetObj(cp, len)) != 0xFF) {
@@ -582,11 +597,36 @@ static int ReadCommands(CurPos &cp, const char *Name) {
             long cmd;
 
             //                if ((s = GetCharStr(cp, len)) == 0) return -1;
-            if (GetNum(cp, cmd) == 0) ENDFUNCRC(-1);
-            if (GetObj(cp, len) != CF_INT) ENDFUNCRC(-1);
-            if (GetNum(cp, cnt) == 0) ENDFUNCRC(-1);
-            if (GetObj(cp, len) != CF_INT) ENDFUNCRC(-1);
-            if (GetNum(cp, ign) == 0) ENDFUNCRC(-1);
+            if (GetNum(cp, cmd) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (GetObj(cp, len) != CF_INT) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (GetNum(cp, cnt) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (GetObj(cp, len) != CF_INT) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (GetNum(cp, ign) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
 
             //                if (cmd != CmdNum(s)) {
             //                    fprintf(stderr, "Bad Command Id: %s -> %d\n", s, cmd);
@@ -596,7 +636,11 @@ static int ReadCommands(CurPos &cp, const char *Name) {
             if (AddCommand(Cmd, cmd, cnt, ign) == 0) {
                 if (Name == 0 || strcmp(Name, "xx") != 0) {
                     fprintf(stderr, "Bad Command Id: %ld\n", cmd);
+#if _DEBUG_COMMANDS
                     ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
                 }
             }
         }
@@ -604,36 +648,83 @@ static int ReadCommands(CurPos &cp, const char *Name) {
         case CF_STRING: {
             const char *s = GetCharStr(cp, len);
 
-            if (s == 0) ENDFUNCRC(-1);
-            if (AddString(Cmd, s) == 0) ENDFUNCRC(-1);
+            if (s == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (AddString(Cmd, s) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
         }
         break;
         case CF_INT: {
             long num;
 
-            if (GetNum(cp, num) == 0) ENDFUNCRC(-1);
-            if (AddNumber(Cmd, num) == 0) ENDFUNCRC(-1);
+            if (GetNum(cp, num) == 0)
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (AddNumber(Cmd, num) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
         }
         break;
         case CF_VARIABLE: {
             long num;
 
-            if (GetNum(cp, num) == 0) ENDFUNCRC(-1);
-            if (AddVariable(Cmd, num) == 0) ENDFUNCRC(-1);
+            if (GetNum(cp, num) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
+            if (AddVariable(Cmd, num) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
         }
         break;
         case CF_CONCAT:
             cpos++;
-            if (AddConcat(Cmd) == 0) ENDFUNCRC(-1);
+            if (AddConcat(Cmd) == 0) 
+#if _DEBUG_COMMANDS
+			ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
             break;
         case CF_END:
             cpos++;
+#if _DEBUG_COMMANDS
             ENDFUNCRC(Cmd);
+#else
+				return Cmd;
+#endif
         default:
+#if _DEBUG_COMMANDS
             ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
         }
     }
+#if _DEBUG_COMMANDS
     ENDFUNCRC(-1);
+#else
+				return -1;
+#endif
 }
 
 static int ReadMenu(CurPos &cp, const char *MenuName) {

@@ -43,7 +43,8 @@ GUI *gui = 0;
 GView *MouseCapture = 0;
 GView *FocusCapture = 0;
 
-TEvent NextEvent = { 0 };
+TEvent NextEvent[15] = { 0 };
+int nextEventCount = 0;
 
 #define sfFocus   1
 
@@ -856,9 +857,11 @@ void GFrame::Resize(int width, int height) {
 }
 
 int GFrame::ExecMainMenu(char Sub) {
-    NextEvent.What = evCommand;
-    NextEvent.Msg.Command = cmMainMenu;
-    NextEvent.Msg.Param1 = Sub;
+
+    NextEvent[0].What = evCommand;
+    NextEvent[0].Msg.Command = cmMainMenu;
+    NextEvent[0].Msg.Param1 = Sub;
+    nextEventCount = 1;
     return 0;
 }
 
@@ -886,10 +889,10 @@ void GUI::DispatchEvent(GFrame * /*frame*/, GView *view, TEvent &Event) {
     }
 }
 
-int GUI::ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete, GView **view) {
+int GUI::ConGetEvent(TEventMask EventMask, TEvent *Event, int &count, int WaitTime, int Delete, GView **view) {
     if (view)
         *view = 0;
-    return ::ConGetEvent(EventMask, Event, WaitTime, Delete);
+    return ::ConGetEvent(EventMask, Event, count, WaitTime, Delete);
 }
 
 int GUI::ConPutEvent(TEvent Event) {
@@ -921,11 +924,13 @@ static void HandleVScroll(GView *view, TEvent &E) {
             E1.Msg.Param1 = 1;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (y == wY + wH - 1) {
@@ -936,11 +941,13 @@ static void HandleVScroll(GView *view, TEvent &E) {
             E1.Msg.Param1 = 1;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (y < wY + view->Peer->SbVBegin + 1) {
@@ -950,11 +957,13 @@ static void HandleVScroll(GView *view, TEvent &E) {
             E1.Msg.Command = cmVScrollPgUp;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (y > wY + view->Peer->SbVEnd + 1) {
@@ -964,11 +973,13 @@ static void HandleVScroll(GView *view, TEvent &E) {
             E1.Msg.Command = cmVScrollPgDn;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else {
@@ -982,11 +993,13 @@ static void HandleVScroll(GView *view, TEvent &E) {
 //            printf("YPos = %d %d %d \n\x7", E.Mouse.Y, wY, delta);
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     }
@@ -1010,11 +1023,13 @@ static void HandleHScroll(GView *view, TEvent &E) {
             E1.Msg.Param1 = 1;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (x == wX + wW - 1) {
@@ -1025,11 +1040,13 @@ static void HandleHScroll(GView *view, TEvent &E) {
             E1.Msg.Param1 = 1;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (x < wX + view->Peer->SbHBegin + 1) {
@@ -1039,11 +1056,13 @@ static void HandleHScroll(GView *view, TEvent &E) {
             E1.Msg.Command = cmHScrollPgLt;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else if (x > wX + view->Peer->SbHEnd + 1) {
@@ -1053,11 +1072,13 @@ static void HandleHScroll(GView *view, TEvent &E) {
             E1.Msg.Command = cmHScrollPgRt;
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     } else {
@@ -1071,11 +1092,13 @@ static void HandleHScroll(GView *view, TEvent &E) {
 //            printf("YPos = %d %d %d \n\x7", E.Mouse.Y, wY, delta);
             gui->DispatchEvent(frames, view, E1);
             frames->Update();
+            /*
             do {
                 ConGetEvent(evMouse | evNotify, &E, -1, 1);
                 if (E.What & evNotify)
                     gui->DispatchEvent(frames, view, E);
             } while (E.What & evNotify);
+            */
             if (scrollBreak(E)) break;
         } while (1);
     }
@@ -1083,124 +1106,131 @@ static void HandleHScroll(GView *view, TEvent &E) {
 }
 
 void GUI::ProcessEvent() {
-    TEvent E;
+    TEvent E[15];
+    int count = nextEventCount;
+    for( int x = 0; x < count; x++ ) E[x] = NextEvent[x];
 
-    E = NextEvent;
-    if (E.What != evNone) {
-        NextEvent.What = evNone;
+    if( count ) {
+        nextEventCount = 0; // use the index to overwrite.
     }
-    if (E.What == evNone &&
-            (ConGetEvent(evMouse | evCommand | evKeyboard, &E, 0, 1, 0) == -1 ||
-             E.What == evNone)
+
+    if (!count &&
+            (ConGetEvent(evMouse | evCommand | evKeyboard, E, count, 0, 1, 0) == -1 ||
+             count == 0 )
        ) {
         frames->Update();
-        while (ConGetEvent(evMouse | evCommand | evKeyboard, &E, -1, 1, 0) == -1 ||
-                (E.What == evMouseMove && E.Mouse.Buttons == 0));
+        while (ConGetEvent(evMouse | evCommand | evKeyboard, E, count, -1, 1, 0) == -1 ||
+                (E[0].What == evMouseMove && E[0].Mouse.Buttons == 0));
     }
-    if (E.What != evNone) {
-        GView *view = frames->Active;
+    for( int e = 0; e < count; e++ ) {
+        if( E[e].What != evNone ) {
+            GView* view = frames->Active;
 
-        if (E.What & evMouse) {
-            if (E.What == evMouseDown && E.Mouse.Y == 0 && ShowMenuBar &&
-                    MouseCapture == 0 && FocusCapture == 0) {
-                frames->Update(); // sync before menu
-                if (ExecMainMenu(E, 0) == -1) {
-                    if (E.What == evCommand && E.Msg.Command == cmResize) {
-                        int X, Y;
+            if( E[e].What & evMouse ) {
+                if( E[e].What == evMouseDown && E[e].Mouse.Y == 0 && ShowMenuBar &&
+                    MouseCapture == 0 && FocusCapture == 0 ) {
+                    frames->Update(); // sync before menu
+                    if( ExecMainMenu( E[e], 0 ) == -1 ) {
+                        if( E[e].What == evCommand && E[e].Msg.Command == cmResize ) {
+                            int X, Y;
 
-                        ConQuerySize(&X, &Y);
-                        frames->Resize(X, Y);
+                            ConQuerySize( &X, &Y );
+                            frames->Resize( X, Y );
+                        }
+                        E[e].What = evNone;
                     }
-                    E.What = evNone;
+                    //                fprintf(stderr, "Command got = %d\n", E[e].Msg.Command);
                 }
-//                fprintf(stderr, "Command got = %d\n", E.Msg.Command);
-            }
-            if (E.What == evMouseDown && MouseCapture == 0 && FocusCapture == 0) {
-                GView *V = frames->Active;
+                if( E[e].What == evMouseDown && MouseCapture == 0 && FocusCapture == 0 ) {
+                    GView* V = frames->Active;
 
-                while (V) {
-                    if (E.Mouse.Y >= V->Peer->wY &&
-                            E.Mouse.Y <  V->Peer->wY + V->Peer->wH + (ShowHScroll ? 1 : 0)) {
-                        frames->SelectView(V);
-                        view = V;
-                        break;
+                    while( V ) {
+                        if( E[e].Mouse.Y >= V->Peer->wY &&
+                            E[e].Mouse.Y < V->Peer->wY + V->Peer->wH + ( ShowHScroll ? 1 : 0 ) ) {
+                            frames->SelectView( V );
+                            view = V;
+                            break;
+                        }
+                        V = V->Next;
+                        if( V == frames->Active )
+                            break;
                     }
-                    V = V->Next;
-                    if (V == frames->Active)
-                        break;
                 }
-            }
-            if (ShowVScroll && ShowHScroll && E.What == evMouseDown &&
+                if( ShowVScroll && ShowHScroll && E[e].What == evMouseDown &&
                     MouseCapture == 0 && FocusCapture == 0 &&
-                    E.Mouse.Y == view->Peer->wY + view->Peer->wH &&
-                    E.Mouse.X == view->Peer->wX + view->Peer->wW) {
-            } else {
-                if (ShowVScroll && E.What == evMouseDown && MouseCapture == 0 && FocusCapture == 0 &&
-                        E.Mouse.X == view->Peer->wX + view->Peer->wW) {
-                    HandleVScroll(view, E);
-                    return ;
-                }
-                if (ShowHScroll && E.What == evMouseDown && MouseCapture == 0 && FocusCapture == 0 &&
-                        E.Mouse.Y == view->Peer->wY + view->Peer->wH) {
-                    HandleHScroll(view, E);
-                    return ;
-                }
-            }
-            if (E.What & evMouse) {
-                E.Mouse.Y -= view->Peer->wY;
-                E.Mouse.X -= view->Peer->wX;
-            }
-        }
-        if (E.What == evCommand) {
-            switch (E.Msg.Command) {
-            case cmResize: {
-                int X, Y;
-
-                ConQuerySize(&X, &Y);
-                frames->Resize(X, Y);
-            }
-            break;
-            case cmMainMenu: {
-                char Sub = (char)E.Msg.Param1;
-
-                frames->Update(); // sync before menu
-                if (::ExecMainMenu(E, Sub) != 1) {
-                    ;
-                    if (E.What == evCommand && E.Msg.Command == cmResize) {
-                        int X, Y;
-
-                        ConQuerySize(&X, &Y);
-                        frames->Resize(X, Y);
+                    E[e].Mouse.Y == view->Peer->wY + view->Peer->wH &&
+                    E[e].Mouse.X == view->Peer->wX + view->Peer->wW ) {
+                } else {
+                    if( ShowVScroll && E[e].What == evMouseDown && MouseCapture == 0 && FocusCapture == 0 &&
+                        E[e].Mouse.X == view->Peer->wX + view->Peer->wW ) {
+                        HandleVScroll( view, E[e] );
+                        return;
                     }
-                    E.What = evNone;
-                }
-            }
-            break;
-            case cmPopupMenu: {
-                int id = E.Msg.Param1;
-                int Cols, Rows;
-
-                if (id == -1) return;
-                frames->ConQuerySize(&Cols, &Rows);
-                int x = Cols / 2, y = Rows / 2;
-                ConQueryMousePos(&x, &y);
-
-                frames->Update(); // sync before menu
-                if (::ExecVertMenu(x, y, id, E, 0) != 1) {
-                    if (E.What == evCommand && E.Msg.Command == cmResize) {
-                        int X, Y;
-
-                        ConQuerySize(&X, &Y);
-                        frames->Resize(X, Y);
+                    if( ShowHScroll && E[e].What == evMouseDown && MouseCapture == 0 && FocusCapture == 0 &&
+                        E[e].Mouse.Y == view->Peer->wY + view->Peer->wH ) {
+                        HandleHScroll( view, E[e] );
+                        return;
                     }
-                    E.What = evNone;
+                }
+                if( E[e].What & evMouse ) {
+                    E[e].Mouse.Y -= view->Peer->wY;
+                    E[e].Mouse.X -= view->Peer->wX;
                 }
             }
-            break;
+            if( E[e].What == evCommand ) {
+                switch( E[e].Msg.Command ) {
+                case cmResize:
+                {
+                    int X, Y;
+
+                    ConQuerySize( &X, &Y );
+                    frames->Resize( X, Y );
+                }
+                break;
+                case cmMainMenu:
+                {
+                    char Sub = (char)E[e].Msg.Param1;
+
+                    frames->Update(); // sync before menu
+                    if( ::ExecMainMenu( E[e], Sub ) != 1 ) {
+                        ;
+                        if( E[e].What == evCommand && E[e].Msg.Command == cmResize ) {
+                            int X, Y;
+
+                            ConQuerySize( &X, &Y );
+                            frames->Resize( X, Y );
+                        }
+                        E[e].What = evNone;
+                    }
+                }
+                break;
+                case cmPopupMenu:
+                {
+                    int id = E[e].Msg.Param1;
+                    int Cols, Rows;
+
+                    if( id == -1 ) return;
+                    frames->ConQuerySize( &Cols, &Rows );
+                    int x = Cols / 2, y = Rows / 2;
+                    ConQueryMousePos( &x, &y );
+
+                    frames->Update(); // sync before menu
+                    if( ::ExecVertMenu( x, y, id, E[e], 0 ) != 1 ) {
+                        if( E[e].What == evCommand && E[e].Msg.Command == cmResize ) {
+                            int X, Y;
+
+                            ConQuerySize( &X, &Y );
+                            frames->Resize( X, Y );
+                        }
+                        E[e].What = evNone;
+                    }
+                }
+                break;
+                }
             }
+            if( E[e].What != evNone )
+                DispatchEvent( frames, view, E[e] );
         }
-        if (E.What != evNone)
-            DispatchEvent(frames, view, E);
     }
 }
 

@@ -206,7 +206,7 @@ int ConHideMouse();
 int ConMouseVisible();
 int ConQueryMouseButtons(int *ButtonCount);
 
-int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete);
+int ConGetEvent(TEventMask EventMask, TEvent *Event, int &count, int WaitTime, int Delete);
 int ConPutEvent(TEvent Event);
 
 

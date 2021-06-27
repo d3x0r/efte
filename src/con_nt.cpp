@@ -235,279 +235,324 @@ struct {
 char shftwrng[]  = "~!@#$%^&*()_+{}|:\"<>?";
 char shftright[] = "`1234567890-=[]\\;',./";
 
-int ReadConsoleEvent(TEvent *E) {
+int ReadConsoleEvent(TEvent *E, int &count) {
     /*
      *      Reads and interprets the console event. It is called when console input
      *      handle is signalled. To prevent flashing cursors this routine returns
      *      F if there's nothing to do; this causes the caller to loop without
      *      returning to the FTE mainloop.
      */
-    INPUT_RECORD inp;
+    INPUT_RECORD inp_[15];
+    int inp_id = 0;
     DWORD           nread;
     TKeyCode        Ch = 0;
     TKeyCode        flg = 0;
     ULONG           flags;
     int             I, i;
     STARTFUNC( __func__ );
-
-    ReadConsoleInput(ConIn, &inp, 1, &nread);
-    if (nread != 1) return False;                           // Nothing read after signal??
-    LOG << "input event:" << inp.EventType << ENDLINE;
-    if( inp.EventType == FOCUS_EVENT ) {
-        return False;
-    }
-    switch (inp.EventType) {
-	case WINDOW_BUFFER_SIZE_EVENT:
-        //** Resized the window. Make FTE use the new size..
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo( OurConOut, &csbi );
-        frames->Resize( consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left, consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top );
-        //frames->Resize( consoleWidth = inp.Event.WindowBufferSizeEvent.dwSize.X, consoleHeight = inp.Event.WindowBufferSizeEvent.dwSize.Y);
-        frames->Repaint();
-        return True;
-
-    case KEY_EVENT:
-        static int cl;
-        static char buf[256];
-        LOG << "Depressed: sc:" << inp.Event.KeyEvent.wVirtualScanCode <<" vk:"<< inp.Event.KeyEvent.wVirtualKeyCode << " asc:" << inp.Event.KeyEvent.uChar.AsciiChar << ENDLINE;
-        if( !inp.Event.KeyEvent.wVirtualScanCode && !inp.Event.KeyEvent.wVirtualKeyCode ) {
-            int x = ( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar );
-            if( cl || ( x == '\x1b' ) ) {
-                switch( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar ) {
-                case 'A':
-                    // down arrow.
-                    if( cl == 1 ) { cl = 0; Ch = kbUp; }
-                    break;
-                case 'B':
-                    if( cl == 1 ) { cl = 0;  Ch = kbDown; }
-                    break;
-                case 'C':
-                    if( cl == 1 ) { cl = 0;  Ch = kbRight; }
-                    break;
-                case 'D':
-                    if( cl == 1 ) { cl = 0;  Ch = kbLeft; }
-                    break;
-                case 'H':
-                    if( cl == 1 ) { cl = 0;  Ch = kbHome; }
-                    break;
-                case 'F':
-                    if( cl == 1 ) { cl = 0;  Ch = kbEnd; }
-                    break;
-                case '2':
-                    if( cl == 1 ) cl = 4;
-                    break;
-                case '3':
-                    if( cl == 1 ) cl = 5;
-                    break;
-                case '5':
-                    if( cl == 1 ) cl = 2;
-                    break;
-                case '6':
-                    if( cl == 1 ) cl = 3;
-                    break;
-                case '~':
-                    if( cl == 2 ) { cl = 0;  Ch = kbPgUp; }
-                    if( cl == 3 ) { cl = 0;  Ch = kbPgDn; }
-                    if( cl == 4 ) { cl = 0;  Ch = kbIns; }
-                    if( cl == 5 ) { cl = 0;  Ch = kbDel; }
-                    break;
-                case '[':
-                    cl = 1;
-                    break;
-                case '\x1b':
-                    if( cl != 0 ) { dbg( "Broken escape sequence. %d", cl ); }
-                    cl = 1;
-                    break;
-                default:
-                    dbg( "Key unhandled: %d  %c %d\n", cl, inp.Event.KeyEvent.uChar.AsciiChar, inp.Event.KeyEvent.uChar.AsciiChar );
-                    break;
-                }
-            } else {
-                Ch = x;
-            }
-            if( Ch ) {
-                E->Key.Code = Ch | flg;         // Set FTE keycode,
-                E->What = evKeyDown;
-                return True;
-            }
+#define inp inp_[inp_id]
+    ReadConsoleInput(ConIn, inp_, 15, &nread);
+    if (nread < 1) return False;                           // Nothing read after signal??
+    for( inp_id = 0; inp_id < nread; inp_id++ ) {
+        LOG << "input " << nread << " events:" << inp.EventType << ENDLINE;
+        if( inp.EventType == FOCUS_EVENT ) {
             return False;
-        } 
-    
+        }
+        switch( inp.EventType ) {
+        case WINDOW_BUFFER_SIZE_EVENT:
+            //** Resized the window. Make FTE use the new size..
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo( OurConOut, &csbi );
+            frames->Resize( consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left, consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top );
+            //frames->Resize( consoleWidth = inp.Event.WindowBufferSizeEvent.dwSize.X, consoleHeight = inp.Event.WindowBufferSizeEvent.dwSize.Y);
+            frames->Repaint();
+            return True;
 
-        if (inp.Event.KeyEvent.bKeyDown) {
-            if ((inp.Event.KeyEvent.dwControlKeyState & CAPSLOCK_ON) &&
+        case KEY_EVENT:
+            static int cl;
+            static char buf[256];
+            static int ignoreVirtual;
+            LOG << "Depressed: sc:" << inp.Event.KeyEvent.wVirtualScanCode << " vk:" << inp.Event.KeyEvent.wVirtualKeyCode << " asc:" << inp.Event.KeyEvent.uChar.AsciiChar << ENDLINE;
+            if( nread > 1 ) {
+                //inp_id = nread;
+                for( ; inp_id < nread; inp_id++ ) {
+                    if( !inp.Event.KeyEvent.wVirtualScanCode && !inp.Event.KeyEvent.wVirtualKeyCode ) {
+                        if( ignoreVirtual ) {
+                            LOG << "Avoiding duplicate input while alternate keys are down." << ENDLINE;
+                            return False;
+                        }
+                        int x = ( buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar );
+                        if( cl || ( x == '\x1b' ) ) {
+                            char c = buf[cl] = inp.Event.KeyEvent.uChar.AsciiChar; // will be 7 bit value.
+                            if( cl == 1 && ( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) || ( c >= 0 && c < 32 ) ) ) {
+                                count = 0;
+                                int scan = VkKeyScan( c );
+                                for( I = 0; I < sizeof( VirtTab ) / sizeof( VirtTab[0] ); I++ )
+                                    if( VirtTab[I].VirtCode == scan ) {
+                                        scan = VirtTab[I].KeyCode;
+                                        break;
+                                    }
+
+
+                                if( c < 32 )
+                                    E[count].Key.Code = scan | kfAlt | kfCtrl;         // Set FTE keycode,
+                                else
+                                    E[count].Key.Code = scan | kfAlt;         // Set FTE keycode,
+
+                                E[count].What = evKeyDown;
+                                count = 1;
+                                cl = 0;
+                                return True;
+                            }
+                            switch( c ) {
+                            case 'A':
+                                // down arrow.
+                                if( cl == 2 ) { cl = 0; Ch = kbUp; }
+                                break;
+                            case 'B':
+                                if( cl == 2 ) { cl = 0;  Ch = kbDown; }
+                                break;
+                            case 'C':
+                                if( cl == 2 ) { cl = 0;  Ch = kbRight; }
+                                break;
+                            case 'D':
+                                if( cl == 2 ) { cl = 0;  Ch = kbLeft; }
+                                break;
+                            case 'H':
+                                if( cl == 2 ) { cl = 0;  Ch = kbHome; }
+                                break;
+                            case 'F':
+                                if( cl == 2 ) { cl = 0;  Ch = kbEnd; }
+                                break;
+                            case '2':
+                                if( cl == 2 ) cl = 5;
+                                break;
+                            case '3':
+                                if( cl == 2 ) cl = 6;
+                                break;
+                            case '5':
+                                if( cl == 2 ) cl = 3;
+                                break;
+                            case '6':
+                                if( cl == 2 ) cl = 4;
+                                break;
+                            case '~':
+                                if( cl == 3 ) { cl = 0;  Ch = kbPgUp; }
+                                if( cl == 4 ) { cl = 0;  Ch = kbPgDn; }
+                                if( cl == 5 ) { cl = 0;  Ch = kbIns; }
+                                if( cl == 6 ) { cl = 0;  Ch = kbDel; }
+                                break;
+                            case '[':
+                                if( cl == 1 ) cl = 2;
+                                break;
+                            case '\x1b':
+                                if( cl != 0 ) { dbg( "Broken escape sequence. %d", cl ); }
+                                cl = 1;
+                                break;
+                            default:
+                                dbg( "Key unhandled: %d  %c %d\n", cl, inp.Event.KeyEvent.uChar.AsciiChar, inp.Event.KeyEvent.uChar.AsciiChar );
+                                break;
+                            }
+                        } else {
+                            LOG << " ---- !! FAIL ----" << ENDLINE;
+                            Ch = x;
+                        }
+                        if( Ch ) {
+                            E[0].Key.Code = Ch | flg;         // Set FTE keycode,
+                            E[0].What = evKeyDown;
+                            count = 1;
+                            return True;
+                        }
+                    }
+                }
+                if( cl )
+                    return False;
+            }
+            LOG << "Use old key handling..." << ENDLINE;
+
+            if( inp.Event.KeyEvent.bKeyDown ) {
+                if( ( inp.Event.KeyEvent.dwControlKeyState & CAPSLOCK_ON ) &&
                     inp.Event.KeyEvent.wVirtualKeyCode != 106 &&
                     inp.Event.KeyEvent.wVirtualKeyCode != 109 &&
-                    inp.Event.KeyEvent.wVirtualKeyCode != 107) {
-                if (!(inp.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED)) {
-                    for (i = 0; shftwrng[i]; i++) {
-                        if (inp.Event.KeyEvent.uChar.AsciiChar == shftwrng[i]) {
-                            inp.Event.KeyEvent.uChar.AsciiChar = shftright[i];
-                            break;
+                    inp.Event.KeyEvent.wVirtualKeyCode != 107 ) {
+                    if( !( inp.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED ) ) {
+                        for( i = 0; shftwrng[i]; i++ ) {
+                            if( inp.Event.KeyEvent.uChar.AsciiChar == shftwrng[i] ) {
+                                inp.Event.KeyEvent.uChar.AsciiChar = shftright[i];
+                                break;
+                            }
+                        }
+                    } else {
+                        for( i = 0; shftright[i]; i++ ) {
+                            if( inp.Event.KeyEvent.uChar.AsciiChar == shftright[i] ) {
+                                inp.Event.KeyEvent.uChar.AsciiChar = shftwrng[i];
+                                break;
+                            }
                         }
                     }
+                }
+            }
+            //** Skip shift, control and alt key stuff.
+
+            switch( inp.Event.KeyEvent.wVirtualKeyCode ) {
+            case VK_SHIFT:
+                //ignoreVirtual = ( ignoreVirtual & ~1 ) | ( inp.Event.KeyEvent.bKeyDown ? 1 : 0 );
+                //return False;
+            case VK_CONTROL:
+                //ignoreVirtual = ( ignoreVirtual & ~2 ) | ( inp.Event.KeyEvent.bKeyDown ? 2 : 0 );
+                //return False;
+            case VK_MENU:
+                //ignoreVirtual = (ignoreVirtual & ~4 ) | (inp.Event.KeyEvent.bKeyDown?4:0);
+                //return False;
+            case VK_PAUSE:
+            case VK_CAPITAL:
+            case VK_LWIN:
+            case VK_RWIN:
+            case VK_APPS:
+                LOG << "control key is ignored..." << ENDLINE;
+                return False;
+            }
+
+            //** Distill FTE flags from the NT flags. This fails for some keys
+            //** because NT has an oddity with enhanced keys (Alt-Grey-+ etc).
+
+            // from chaac: Please do not toutch RIGHT_ALT_PRESSED handling,
+            // in some keyboard ALT-GR is used for special characters.
+            flags = inp.Event.KeyEvent.dwControlKeyState;
+            if( flags & (/*RIGHT_ALT_PRESSED |*/ LEFT_ALT_PRESSED ) ) flg |= kfAlt;
+            if( flags & ( RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED ) ) flg |= kfCtrl;
+            if( flags & ( RIGHT_ALT_PRESSED ) ) flg &= ~kfCtrl;
+            if( flags & SHIFT_PRESSED ) flg |= kfShift;
+            if( flags & ENHANCED_KEY ) flg |= kfGray;
+            LOG << "Flags is now : " << std::hex << flags << ENDLINE;
+
+            LOG << "key1: " << ( inp.Event.KeyEvent.bKeyDown ? "down" : "up" )
+                << ", vk=" << std::hex << inp.Event.KeyEvent.wVirtualKeyCode
+                << ", vscan=" << std::hex << inp.Event.KeyEvent.wVirtualScanCode
+                << ", flags=" << std::hex << flags
+                << ", rep=" << inp.Event.KeyEvent.wRepeatCount
+                << ", ascii=" << std::hex << inp.Event.KeyEvent.uChar.AsciiChar << "(" << inp.Event.KeyEvent.uChar.AsciiChar << ").\n"
+                << ENDLINE;
+
+            Ch = 0;
+
+            // handle special case when user with scandinavian keyboard presses
+            // alt-gr + special key and then spacebar
+            if( inp.Event.KeyEvent.bKeyDown ) {
+                if( ( inp.Event.KeyEvent.wVirtualKeyCode == 0x20 ) &&
+                    ( inp.Event.KeyEvent.wVirtualScanCode == 0x39 ) ) {
+                    switch( inp.Event.KeyEvent.uChar.AsciiChar ) {
+                    case '~':
+                        Ch = '~';
+                        break;
+                    case '^':
+                        Ch = '^';
+                        break;
+                    case '`':
+                        Ch = '`';
+                        break;
+                    case '\xEF':
+                        Ch = '\xEF';
+                        break;
+                    }
+                }
+            }
+
+            //** Translate VK codes to FTE codes,
+            if( Ch == 0 ) {
+                for( I = 0; I < sizeof( VirtTab ) / sizeof( VirtTab[0] ); I++ )
+                    if( VirtTab[I].VirtCode == inp.Event.KeyEvent.wVirtualKeyCode ) {
+                        Ch = VirtTab[I].KeyCode;
+                        break;
+                    }
+            }
+
+            //** Not a virtual key-> do charscan translation, if needed;
+            if( Ch == 0 ) {
+                unsigned int     cc = ( ( inp.Event.KeyEvent.wVirtualScanCode << 8 ) | (unsigned char)inp.Event.KeyEvent.uChar.AsciiChar );
+                for( I = 0; I < NUMITEMS( TransCharScan ); I++ ) {
+                    if( cc == TransCharScan[I].CharScan ) {
+                        Ch = TransCharScan[I].KeyCode;
+                        break;
+                    }
+                }
+            }
+
+            if( Ch == 0 )                            //** Odd: cannot distill keycode.
+                return False;
+
+            if( flg & kfCtrl )
+                if( Ch < 32 )
+                    Ch += 64;
+
+            E->Key.Code = Ch | flg;         // Set FTE keycode,
+            E->What = inp.Event.KeyEvent.bKeyDown ? evKeyDown : evKeyUp;
+            count = 1;
+            return True;
+
+        case MOUSE_EVENT:
+            LastMouseX = E->Mouse.X = inp.Event.MouseEvent.dwMousePosition.X;
+            LastMouseY = E->Mouse.Y = inp.Event.MouseEvent.dwMousePosition.Y;
+            flags = inp.Event.MouseEvent.dwControlKeyState;
+            if( flags & ( RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED ) ) flg |= kfAlt;
+            if( flags & ( RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED ) ) flg |= kfCtrl;
+            if( flags & SHIFT_PRESSED ) flg |= kfShift;
+            E->Mouse.KeyMask = flg;
+            E->Mouse.Buttons = (unsigned short)inp.Event.MouseEvent.dwButtonState;
+            E->Mouse.Count = 1;
+            if( inp.Event.MouseEvent.dwEventFlags & DOUBLE_CLICK )
+                E->Mouse.Count = 2;
+
+            if( inp.Event.MouseEvent.dwEventFlags & MOUSE_WHEELED ) {
+                E->What = evCommand;
+                E->Msg.View = 0;
+                E->Msg.Model = 0;
+                E->Msg.Param2 = 0;
+
+                // Scroll:
+                // (The SDK does not tell how to determine whether the wheel
+                // was scrolled up or down. Found an example on:
+                // http://www.adrianxw.dk/SoftwareSite/Consoles/Consoles5.html
+                if( inp.Event.MouseEvent.dwButtonState & 0xFF000000 ) {  // Wheel down
+                    if( flg & kfShift ) { // Translate to horizontal scroll.
+                        E->Msg.Command = ( flg & kfCtrl ) ? cmHScrollPgRt : cmHScrollRight;
+                    } else { // Translate to vertical scroll.
+                        E->Msg.Command = ( flg & kfCtrl ) ? cmVScrollPgDn : cmVScrollDown;
+                    }
+                } else { // Wheel up
+                    if( flg & kfShift ) { // Translate to horizontal scroll.
+                        E->Msg.Command = ( flg & kfCtrl ) ? cmHScrollPgLt : cmHScrollLeft;
+                    } else { // Translate to vertical scroll.
+                        E->Msg.Command = ( flg & kfCtrl ) ? cmVScrollPgUp : cmVScrollUp;
+                    }
+                }
+
+                E->Msg.Param1 = ( flg & kfCtrl ) ? 1 : 3; // 1 page / 3 lines
+
+                return True;
+            }
+
+            if( inp.Event.MouseEvent.dwEventFlags == MOUSE_MOVED ) {
+                E->What = evMouseMove;
+                //puts("Move");
+            } else {
+                static unsigned short mb = 0;
+
+                if( inp.Event.MouseEvent.dwButtonState & ~mb ) {
+                    E->What = evMouseDown;
+                    E->Mouse.Buttons = ( (unsigned short)inp.Event.MouseEvent.dwButtonState ) & ~mb;
+                    //puts("Down");
                 } else {
-                    for (i = 0; shftright[i]; i++) {
-                        if (inp.Event.KeyEvent.uChar.AsciiChar == shftright[i]) {
-                            inp.Event.KeyEvent.uChar.AsciiChar = shftwrng[i];
-                            break;
-                        }
-                    }
+                    E->What = evMouseUp;
+                    E->Mouse.Buttons = mb & ~( (unsigned short)inp.Event.MouseEvent.dwButtonState );
+                    //puts("Up");
                 }
+                mb = (unsigned short)inp.Event.MouseEvent.dwButtonState;
             }
-        }
-        //** Skip shift, control and alt key stuff.
-        switch (inp.Event.KeyEvent.wVirtualKeyCode) {
-        case VK_SHIFT:
-        case VK_CONTROL:
-        case VK_MENU:
-        case VK_PAUSE:
-        case VK_CAPITAL:
-        case VK_LWIN:
-        case VK_RWIN:
-        case VK_APPS:
-            return False;
-        }
-
-        //** Distill FTE flags from the NT flags. This fails for some keys
-        //** because NT has an oddity with enhanced keys (Alt-Grey-+ etc).
-
-        // from chaac: Please do not toutch RIGHT_ALT_PRESSED handling,
-        // in some keyboard ALT-GR is used for special characters.
-        flags = inp.Event.KeyEvent.dwControlKeyState;
-        if (flags & (/*RIGHT_ALT_PRESSED |*/ LEFT_ALT_PRESSED)) flg |= kfAlt;
-        if (flags & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) flg |= kfCtrl;
-        if (flags & (RIGHT_ALT_PRESSED)) flg &= ~kfCtrl;
-        if (flags & SHIFT_PRESSED) flg |= kfShift;
-        if (flags & ENHANCED_KEY) flg |= kfGray;
-
-#if 0
-        dbg("key1: %s, vk=%x, vscan=%x, flags=%x, rep=%d, ascii=%x (%c).\n",
-            inp.Event.KeyEvent.bKeyDown ? "down" : "up",
-            inp.Event.KeyEvent.wVirtualKeyCode,
-            inp.Event.KeyEvent.wVirtualScanCode,
-            flags,
-            inp.Event.KeyEvent.wRepeatCount,
-            inp.Event.KeyEvent.uChar.AsciiChar,
-            inp.Event.KeyEvent.uChar.AsciiChar);
-#endif
-        Ch = 0;
-
-        // handle special case when user with scandinavian keyboard presses
-        // alt-gr + special key and then spacebar
-        if (inp.Event.KeyEvent.bKeyDown) {
-            if ((inp.Event.KeyEvent.wVirtualKeyCode == 0x20) &&
-                    (inp.Event.KeyEvent.wVirtualScanCode == 0x39)) {
-                switch (inp.Event.KeyEvent.uChar.AsciiChar) {
-                case '~':
-                    Ch = '~';
-                    break;
-                case '^':
-                    Ch = '^';
-                    break;
-                case '`':
-                    Ch = '`';
-                    break;
-                case '\xEF':
-                    Ch = '\xEF';
-                    break;
-                }
-            }
-        }
-
-        //** Translate VK codes to FTE codes,
-        if (Ch == 0) {
-            for (I = 0; I < sizeof(VirtTab) / sizeof(VirtTab[0]); I++)
-                if (VirtTab[I].VirtCode == inp.Event.KeyEvent.wVirtualKeyCode) {
-                    Ch = VirtTab[I].KeyCode;
-                    break;
-                }
-        }
-
-        //** Not a virtual key-> do charscan translation, if needed;
-        if (Ch == 0) {
-            unsigned int     cc = ((inp.Event.KeyEvent.wVirtualScanCode << 8) | (unsigned char)inp.Event.KeyEvent.uChar.AsciiChar);
-            for (I = 0; I < NUMITEMS(TransCharScan); I++) {
-                if (cc == TransCharScan[I].CharScan) {
-                    Ch = TransCharScan[I].KeyCode;
-                    break;
-                }
-            }
-        }
-
-        if (Ch == 0)                            //** Odd: cannot distill keycode.
-            return False;
-
-        if (flg & kfCtrl)
-            if (Ch < 32)
-                Ch += 64;
-
-        E->Key.Code = Ch | flg;         // Set FTE keycode,
-        E->What = inp.Event.KeyEvent.bKeyDown ? evKeyDown : evKeyUp;
-        return True;
-
-    case MOUSE_EVENT:
-        LastMouseX = E->Mouse.X = inp.Event.MouseEvent.dwMousePosition.X;
-        LastMouseY = E->Mouse.Y = inp.Event.MouseEvent.dwMousePosition.Y;
-        flags = inp.Event.MouseEvent.dwControlKeyState;
-        if (flags & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)) flg |= kfAlt;
-        if (flags & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) flg |= kfCtrl;
-        if (flags & SHIFT_PRESSED) flg |= kfShift;
-        E->Mouse.KeyMask = flg;
-        E->Mouse.Buttons = (unsigned short)inp.Event.MouseEvent.dwButtonState;
-        E->Mouse.Count = 1;
-        if (inp.Event.MouseEvent.dwEventFlags & DOUBLE_CLICK)
-            E->Mouse.Count = 2;
-
-        if (inp.Event.MouseEvent.dwEventFlags & MOUSE_WHEELED) {
-            E->What        = evCommand;
-            E->Msg.View    = 0;
-            E->Msg.Model   = 0;
-            E->Msg.Param2  = 0;
-
-            // Scroll:
-            // (The SDK does not tell how to determine whether the wheel
-            // was scrolled up or down. Found an example on:
-            // http://www.adrianxw.dk/SoftwareSite/Consoles/Consoles5.html
-            if (inp.Event.MouseEvent.dwButtonState & 0xFF000000) {  // Wheel down
-                if (flg & kfShift) { // Translate to horizontal scroll.
-                    E->Msg.Command = (flg & kfCtrl) ? cmHScrollPgRt : cmHScrollRight;
-                } else { // Translate to vertical scroll.
-                    E->Msg.Command = (flg & kfCtrl) ? cmVScrollPgDn : cmVScrollDown;
-                }
-            } else { // Wheel up
-                if (flg & kfShift) { // Translate to horizontal scroll.
-                    E->Msg.Command = (flg & kfCtrl) ? cmHScrollPgLt : cmHScrollLeft;
-                } else { // Translate to vertical scroll.
-                    E->Msg.Command = (flg & kfCtrl) ? cmVScrollPgUp : cmVScrollUp;
-                }
-            }
-
-            E->Msg.Param1 = (flg & kfCtrl) ? 1 : 3; // 1 page / 3 lines
-
             return True;
         }
-
-        if (inp.Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-            E->What = evMouseMove;
-            //puts("Move");
-        } else {
-            static unsigned short mb = 0;
-
-            if (inp.Event.MouseEvent.dwButtonState & ~mb) {
-                E->What = evMouseDown;
-                E->Mouse.Buttons = ((unsigned short)inp.Event.MouseEvent.dwButtonState) & ~mb;
-                //puts("Down");
-            } else {
-                E->What = evMouseUp;
-                E->Mouse.Buttons = mb & ~((unsigned short)inp.Event.MouseEvent.dwButtonState);
-                //puts("Up");
-            }
-            mb = (unsigned short)inp.Event.MouseEvent.dwButtonState;
-        }
-        return True;
+        return False;
     }
-    return False;
 }
 /*
 static BOOL CALLBACK CODEPAGE_ENUMPROC( LPSTR name ) {
@@ -1005,7 +1050,7 @@ int SaveScreen() {
 
     ConQuerySize(&SavedX, &SavedY);
 
-    SavedScreen = (PCell) malloc(SavedX * SavedY * sizeof(TCell));
+    //SavedScreen = (PCell) malloc(SavedX * SavedY * sizeof(TCell));
 
     //if (SavedScreen)
 	//	ConGetBox(0, 0, SavedX, SavedY, SavedScreen);
@@ -1053,14 +1098,15 @@ int GUI::ConContinue(void) {
 }
 
 int GUI::ShowEntryScreen() {
-    TEvent E;
+    TEvent E[15];
+    int count;
 
     ConHideMouse();
     RestoreScreen();
     SetConsoleActiveScreenBuffer(ConOut);
     do {
-        gui->ConGetEvent(evKeyDown, &E, -1, 1, 0);
-    } while (E.What != evKeyDown);
+        gui->ConGetEvent(evKeyDown, E, count, -1, 1, 0);
+    } while (E[0].What != evKeyDown);
     SetConsoleActiveScreenBuffer(OurConOut);
     ConShowMouse();
     if (frames)
@@ -2102,7 +2148,7 @@ int GetPipeEvent(int i, TEvent *Event) {
 
 #endif
 
-int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete) {
+int ConGetEvent(TEventMask EventMask, TEvent *Event, int &count, int WaitTime, int Delete) {
     //** Any saved events left?
     STARTFUNC( __func__ );
     LOG << "ConGetEvent:" << ENDLINE;
@@ -2137,7 +2183,7 @@ int ConGetEvent(TEventMask EventMask, TEvent *Event, int WaitTime, int Delete) {
         if (rc != WAIT_FAILED && (rc >= WAIT_OBJECT_0 && rc < WAIT_OBJECT_0 + nh)) {
             i       = rc - WAIT_OBJECT_0;                                   // Get item that signalled new data
             if (i == 0) {                                   // Was console?
-                if( ReadConsoleEvent( Event ) ) {         // Get console,
+                if( ReadConsoleEvent( Event, count ) ) {         // Get console,
                     LOG << "This is a long loop" << ENDLINE;
                     return 0;                                                       // And exit if valid,
                 }

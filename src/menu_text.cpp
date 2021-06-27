@@ -276,11 +276,14 @@ int ExecVertMenu(int x, int y, int id, TEvent &E, UpMenu *up) {
             }
         }
         ConHideCursor();
+        /*
         do {
-            ConGetEvent(evCommand | evMouseDown | evMouseMove | evMouseUp | evKeyDown | evNotify, &E, -1, 1);
+            int count,
+            ConGetEvent(evCommand | evMouseDown | evMouseMove | evMouseUp | evKeyDown | evNotify, &E, count -1, 1);
             if (E.What & evNotify)
                 gui->DispatchEvent(frames, frames->Active, E);
         } while (E.What & evNotify);
+        */
         if (E.What & evMouse) {
             //fprintf(stderr, "Mouse: %d %d %d\n", E.What, E.Mouse.X, E.Mouse.Y);
         }
@@ -529,11 +532,13 @@ int ExecMainMenu(TEvent &E, char sub) {
             }
         }
         ConHideCursor();
+        /*
         do {
             ConGetEvent(evCommand | evMouseDown | evMouseMove | evMouseUp | evKeyDown | evNotify, &E, -1, 1);
             if (E.What & evNotify)
                 gui->DispatchEvent(frames, frames->Active, E);
         } while (E.What & evNotify);
+        */
         dovert = 0;
         switch (E.What) {
         case evCommand:
@@ -663,11 +668,13 @@ void GFrame::DrawMenuBar() {
     DrawHMenu(0, 0, id, -1);
 }
 
-extern TEvent NextEvent;
+extern TEvent NextEvent[15];
+extern int nextEventCount;
 
 int GFrame::PopupMenu(const char *Name) {
-    NextEvent.What = evCommand;
-    NextEvent.Msg.Command = cmPopupMenu;
-    NextEvent.Msg.Param1 = GetMenuId(Name);
+    NextEvent[0].What = evCommand;
+    NextEvent[0].Msg.Command = cmPopupMenu;
+    NextEvent[0].Msg.Param1 = GetMenuId(Name);
+    nextEventCount = 1;
     return 0;
 }
